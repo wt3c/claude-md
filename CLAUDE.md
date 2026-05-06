@@ -1,169 +1,158 @@
-# CLAUDE.md — Contexto de Desenvolvimento Multi-Stack
+# CLAUDE.md — Contexto Multi-Stack
 
-> Arquivo de contexto genérico para Claude Code.
-> Projetos específicos devem sobrescrever seções relevantes com seu próprio CLAUDE.md local.
-> Convenção de idioma: comentários no código em **português** | identificadores (variáveis, funções, classes) em **inglês**
-
----
-
-## Orquestração de Workflow
-
-### 1. Modo Planejamento (Plan Mode) — Padrão
-
-- Entrar em modo planejamento para QUALQUER tarefa não trivial (3+ etapas ou decisões arquiteturais)
-- Se algo der errado, PARAR imediatamente e replanejar — não continuar forçando
-- Usar modo planejamento também nas etapas de verificação, não só na construção
-- Escrever especificações detalhadas antes de começar para reduzir ambiguidade
-- Para decisões arquiteturais, registrar os trade-offs considerados em `tasks/decisions.md`
-
-### 2. Estratégia de Subagentes
-
-- Usar subagentes liberalmente para manter o contexto principal limpo
-- Delegar pesquisa, exploração e análises paralelas a subagentes
-- Para problemas complexos, aumentar o compute via subagentes
-- Uma tarefa por subagente para execução focada
-- Subagentes devem retornar resultados estruturados, não prosa solta
-
-### 3. Loop de Auto-Aperfeiçoamento
-
-- Após QUALQUER correção do usuário: atualizar `tasks/lessons.md` com o padrão identificado
-- Escrever regras que previnam o mesmo erro no futuro
-- Iterar sem piedade até a taxa de erro cair
-- Revisar `lessons.md` no início de cada sessão para projetos relevantes
-- Categorizar lições por: stack, padrão arquitetural, antipadrão
-
-### 4. Verificação Antes de Concluir
-
-- Nunca marcar tarefa como concluída sem provar que funciona
-- Fazer diff de comportamento entre `main` e suas mudanças quando relevante
-- Perguntar a si mesmo: "Um engenheiro sênior aprovaria isso?"
-- Executar testes, verificar logs, demonstrar corretude
-- Para Python: rodar `Ruff + mypy + Pytest` antes de marcar como feito
-- Para Unity/C#: rodar todos os testes do Unity Test Framework (Edit Mode + Play Mode)
-
-### 5. Exigir Elegância (com Equilíbrio)
-
-- Para mudanças não triviais: pausar e perguntar "existe uma forma mais elegante?"
-- Se uma correção parecer gambiarra: "Sabendo tudo que sei agora, implementar a solução elegante"
-- Pular isso para correções simples e óbvias — não over-engenheirar
-- Desafiar o próprio trabalho antes de apresentar
-- Elegância ≠ complexidade; código simples e claro é elegante
-
-### 6. Correção Autônoma de Bugs
-
-- Ao receber um bug report: corrigir diretamente, sem pedir orientação passo a passo
-- Apontar logs, erros e testes falhando — e resolver
-- Zero troca de contexto desnecessária para o usuário
-- Corrigir testes de CI falhando sem precisar ser instruído
+<!-- CACHE_MARKER: stable-root-v1 -->
+<!-- Este bloco é estável entre sessões — ideal para Prompt Caching.         -->
+<!-- Projetos específicos sobrescrevem seções via CLAUDE.md local.           -->
+<!-- Idioma: comentários em português | identificadores em inglês            -->
 
 ---
 
-## Gestão de Tarefas
+## ⚡ Bootstrap de Sessão (executar SEMPRE ao iniciar)
 
-### Ciclo de Vida de uma Tarefa
+```
+1. Ler tasks/lessons.md — absorver padrões e antipadrões do projeto
+2. Ler tasks/todo.md    — retomar contexto da última tarefa ativa
+3. Confirmar stack ativa e carregar seção de stack correspondente (abaixo)
+```
 
-1. **Planejar Primeiro**: Escrever plano em `tasks/todo.md` com itens checkáveis
-2. **Validar o Plano**: Confirmar com o usuário antes de iniciar a implementação
-3. **Rastrear Progresso**: Marcar itens como concluídos conforme avança
-4. **Explicar Mudanças**: Resumo de alto nível em cada etapa
-5. **Documentar Resultados**: Adicionar seção de review ao `tasks/todo.md`
-6. **Capturar Lições**: Atualizar `tasks/lessons.md` após correções
+> Se `tasks/` não existir: criar estrutura antes de qualquer outra ação.
 
-### Estrutura de Arquivos de Tarefa
+---
+
+## 🧠 Skills Disponíveis
+
+Antes de qualquer tarefa não trivial, verificar se existe uma skill aplicável:
+
+| Contexto                       | Skill a carregar                              |
+|--------------------------------|-----------------------------------------------|
+| Documentos Word / .docx        | `/mnt/skills/public/docx/SKILL.md`            |
+| PDFs (criar ou extrair)        | `/mnt/skills/public/pdf/SKILL.md`             |
+| Apresentações .pptx            | `/mnt/skills/public/pptx/SKILL.md`            |
+| Planilhas .xlsx                | `/mnt/skills/public/xlsx/SKILL.md`            |
+| UI / Frontend / Componentes    | `/mnt/skills/public/frontend-design/SKILL.md` |
+| Arquivos enviados pelo usuário | `/mnt/skills/public/file-reading/SKILL.md`    |
+| PDFs para leitura              | `/mnt/skills/public/pdf-reading/SKILL.md`     |
+
+**Regra:** carregar a skill antes de escrever qualquer código ou criar qualquer arquivo.
+
+---
+
+## 🔄 Orquestração de Workflow
+
+### Modo Planejamento — Padrão para tarefas 3+ etapas
+
+- Escrever plano em `tasks/todo.md` → validar com usuário → só então implementar
+- Se algo der errado: PARAR e replanejar — nunca continuar forçando
+- Decisões arquiteturais: registrar trade-offs em `tasks/decisions.md` (formato ADR)
+
+### Subagentes
+
+- Usar liberalmente para manter contexto principal limpo
+- Uma tarefa por subagente; retornar resultados estruturados (não prosa solta)
+- Delegar: pesquisa, exploração, análises paralelas, validações isoladas
+
+### Auto-Aperfeiçoamento
+
+- Após qualquer correção do usuário → atualizar `tasks/lessons.md` imediatamente
+- Categorizar por: `stack | padrão | antipadrão`
+- Revisar `lessons.md` no bootstrap de cada sessão
+
+### Verificação Antes de Concluir
+
+- Nunca marcar como concluído sem provar funcionamento
+- Pergunta obrigatória: *"Um engenheiro sênior aprovaria isso?"*
+- Python: `ruff check . --fix && ruff format . && mypy . && pytest --cov`
+- Unity/C#: todos os testes Unity Test Framework (Edit Mode + Play Mode) passando
+
+---
+
+## 📁 Estrutura de Tarefas
 
 ```
 tasks/
-├── todo.md          # Plano ativo com checklist
-├── lessons.md       # Lições aprendidas por categoria de stack
-├── decisions.md     # ADRs — Architecture Decision Records
-└── archive/         # Tarefas concluídas (mover após review)
+├── todo.md        # Plano ativo com checklist
+├── lessons.md     # Lições aprendidas (categorizadas por stack)
+├── decisions.md   # ADRs — Architecture Decision Records
+└── archive/       # Tarefas concluídas
 ```
 
-### Formato do `todo.md`
+### `todo.md`
 
 ```markdown
 # Tarefa: [nome]
 
 ## Objetivo
-[descrição clara do que precisa ser feito e o critério de aceite]
+
+[descrição + critério de aceite]
 
 ## Plano
+
 - [ ] Etapa 1
-- [ ] Etapa 2
-- [x] Etapa 3 (concluída)
+- [x] Etapa 2 (concluída)
 
 ## Verificação
+
 - [ ] Testes passando
 - [ ] Lint sem erros
-- [ ] Code review checklist
+- [ ] Checklist pré-entrega
 
 ## Review
-[resumo do que foi feito, decisões tomadas e impacto]
+
+[resumo, decisões, impacto]
 ```
 
-### Formato do `lessons.md`
+### `lessons.md`
 
 ```markdown
 # Lições Aprendidas
 
 ## Python / Django
-- [PADRÃO] Sempre usar SQLAlchemy engine em vez de conexão DBAPI2 direta com pandas
-  Motivo: evita UserWarning e é mais robusto para produção
 
-## PySpark / Dados
-- [ANTIPADRÃO] Nunca usar .collect() em DataFrames grandes sem amostragem prévia
-  Motivo: estoura memória do driver em datasets de produção
+- [PADRÃO] Usar SQLAlchemy engine para Pandas ↔ banco (evita UserWarning DBAPI2)
+
+## PySpark
+
+- [ANTIPADRÃO] .collect() sem amostragem prévia → estoura memória do driver
 
 ## C# / Unity
-- [PADRÃO] Evitar singletons estáticos; preferir referências diretas ou UnityEvents
-  Motivo: dificulta testes e cria acoplamento implícito entre sistemas
+
+- [PADRÃO] Evitar singletons estáticos → preferir referências diretas ou UnityEvents
 ```
 
-### Formato do `decisions.md` (ADR)
+### `decisions.md` (ADR)
 
 ```markdown
-# ADR-001: [título da decisão]
+# ADR-001: [título]
 
-**Status**: Aceito | Proposto | Depreciado
+**Status**: Proposto | Aceito | Depreciado  
 **Data**: YYYY-MM-DD
 
-## Contexto
-[por que esta decisão foi necessária]
-
-## Decisão
-[o que foi decidido]
-
-## Consequências
-[trade-offs, dívida técnica intencional, próximos passos]
+## Contexto / Decisão / Consequências
 ```
 
 ---
 
-## Contextos de Stack
+## 🐍 Stack: Python / Django
 
-### Python / Django — Projetos Novos e Legados
+<!-- @cache: carregar apenas quando stack=python -->
 
-#### Padrões Obrigatórios
+### Obrigatório
 
-- TDD: Red → Green → Refactor — sem exceções
-- Lint: Ruff (formato e lint) + mypy (tipagem estática)
-- Testes: Pytest com cobertura mínima de 80% em código novo
-- Comentários no código: sempre em português
-- Injeção de dependência via Protocol interfaces (não herança concreta)
-- Princípios SOLID — especialmente SRP e DIP
+- TDD: Red → Green → Refactor (sem exceções)
+- Lint: `Ruff` + `mypy` | Testes: `Pytest` ≥ 80% cobertura em código novo
+- DI via `Protocol` (não herança concreta) | Princípios SOLID (SRP + DIP em foco)
+- Comentários: português | Identificadores: inglês
 
-#### Refatoração de Legado
+### Legado
 
-- Antes de refatorar: escrever testes de caracterização primeiro
-- Aplicar padrões incrementalmente: Chain of Responsibility, Repository, Strategy
-- Não quebrar a API pública existente sem aprovação explícita
-- Manter changelog de breaking changes em `tasks/decisions.md`
-- Preferir refatoração em pequenos passos rastreáveis (commits atômicos)
+- Escrever testes de caracterização **antes** de refatorar
+- Padrões incrementais: Chain of Responsibility, Repository, Strategy
+- Nunca quebrar API pública sem aprovação explícita
+- Commits atômicos e rastreáveis
 
-#### Ciclo de Qualidade
+### Ciclo de Qualidade
 
 ```bash
-# Executar antes de marcar qualquer tarefa como concluída
 ruff check . --fix && ruff format .
 mypy .
 pytest --cov --cov-report=term-missing
@@ -171,98 +160,88 @@ pytest --cov --cov-report=term-missing
 
 ---
 
-### Engenharia de Dados — PySpark / Airflow / Hadoop / Lakehouse
+## 📊 Stack: Engenharia de Dados (PySpark / Airflow / Hadoop)
 
-#### Padrões Obrigatórios
+<!-- @cache: carregar apenas quando stack=dados -->
 
-- Nunca usar `.collect()` sem amostragem prévia em datasets grandes
-- Particionar DataFrames por colunas adequadas antes de joins custosos
-- DAGs do Airflow: idempotentes por padrão (reexecutáveis sem efeitos colaterais)
-- Documentar lineage de dados em comentários de pipeline
-- Usar SQLAlchemy engine para conexões Pandas ↔ banco de dados (evita UserWarning)
+### Obrigatório
+
+- Nunca `.collect()` sem amostragem prévia em datasets grandes
+- Particionar antes de joins custosos
+- DAGs Airflow: idempotentes por padrão
 - Validar schema antes de qualquer transformação
+- SQLAlchemy engine para Pandas ↔ banco
 
-#### Qualidade de Pipeline
+### Qualidade de Pipeline
 
-- Testes de pipeline com datasets de fixture (nunca dados de produção)
-- Log de métricas obrigatório: linhas entrada / saída / descartadas por etapa
-- Alertas em DAGs para falhas silenciosas (dados vazios não são necessariamente erro)
+- Testes com fixtures (nunca dados de produção)
+- Log obrigatório: linhas entrada / saída / descartadas por etapa
+- Alertas para falhas silenciosas (dados vazios ≠ erro automático)
 - Particionamento de saída documentado junto com a DAG
 
 ---
 
-### C# / Unity — Mobile Game Development (Android)
+## 🎮 Stack: C# / Unity (Mobile Android)
 
-#### Padrões Obrigatórios
+<!-- @cache: carregar apenas quando stack=unity -->
 
-- TDD com Unity Test Framework (Edit Mode + Play Mode)
-- Ciclo: Red → Green → Refactor — obrigatório
-- Comentários no código: português
-- EVITAR singletons estáticos; usar referências diretas ou UnityEvents
-- Build: IL2CPP backend + ARM64
-- Renderização: URP (Universal Render Pipeline)
+### Obrigatório
 
-#### Arquitetura de Game
-
-- ScriptableObjects para dados de configuração (não hardcode de valores)
-- Separar lógica de jogo da apresentação (padrão MVC/MVP)
+- TDD: Red → Green → Refactor com Unity Test Framework
+- Build: IL2CPP + ARM64 | Renderização: URP
+- Sem singletons estáticos → referências diretas ou UnityEvents
+- ScriptableObjects para configuração (zero hardcode)
+- Separar lógica de jogo da apresentação (MVC/MVP)
 - Object Pooling para entidades com spawn frequente
-- Evitar `FindObjectOfType` em runtime — usar injeção via Inspector
-- Assets gerados por IA (Meshy.ai, Suno, ElevenLabs): manter crédito no projeto
+- Sem `FindObjectOfType` em runtime → injeção via Inspector
 
-#### Checklist Antes de Build
+### Checklist de Build
 
 ```
-[ ] Todos os testes Unity Test Framework passando
+[ ] Unity Test Framework: Edit Mode + Play Mode passando
 [ ] Console sem erros (warnings revisados e justificados)
-[ ] Profiler: verificar alocações GC em hot paths críticos
+[ ] Profiler: sem alocações GC em hot paths críticos
 [ ] Build testada em device físico Android
-[ ] IL2CPP + ARM64 configurado no Player Settings
-[ ] Tamanho do APK/AAB dentro do limite aceitável
+[ ] IL2CPP + ARM64 no Player Settings
+[ ] Tamanho APK/AAB dentro do limite aceitável
 ```
 
 ---
 
-## Princípios Core
+## 🏛️ Princípios Core
 
-### Simplicidade Primeiro
+<!-- CACHE_MARKER: principles-stable -->
 
-- Fazer cada mudança da forma mais simples possível
-- Impactar o mínimo de código necessário
-- Código legível por um desenvolvedor júnior é mais valioso que código "inteligente"
-- Se precisar de um comentário para explicar **o que** faz (não por quê), considere renomear
-
-### Sem Preguiça (No Laziness)
-
-- Encontrar a causa raiz — nunca correções temporárias sem rastreamento
-- Padrão de desenvolvedor sênior em toda entrega
-- Nunca deixar `TODO` sem data ou responsável
-- Débito técnico intencional deve ser documentado em `tasks/decisions.md`
-
-### Impacto Mínimo
-
-- Mudanças devem tocar apenas o necessário
-- Evitar introduzir bugs colaterais
-- Preferir mudanças incrementais e reversíveis
-- Feature flags para mudanças de alto risco
+| Princípio      | Regra                                                              |
+|----------------|--------------------------------------------------------------------|
+| Simplicidade   | Mudança mais simples possível; mínimo de código impactado          |
+| Sem Atalhos    | Causa raiz sempre; `TODO` sem data/responsável é proibido          |
+| Impacto Mínimo | Mudanças incrementais e reversíveis; feature flags para alto risco |
+| Sem Gambiarras | Se parece gambiarra → implementar a solução elegante               |
+| Elegância      | Simples e claro > inteligente e obscuro                            |
+| Autonomia      | Bug report → corrigir direto, sem pedir orientação passo a passo   |
 
 ### Padrões Arquiteturais Preferidos
 
-- Composição > Herança
-- Protocol/Interface > Classe concreta
-- Injeção de dependência > instanciação direta
-- Evento/Callback > polling ativo
-- Repositório > acesso direto ao banco de dados
-- Configuração externalizada > hardcode
+```
+Composição       > Herança
+Protocol/Interface > Classe concreta
+Injeção de dep.  > Instanciação direta
+Evento/Callback  > Polling ativo
+Repositório      > Acesso direto ao banco
+Config externa   > Hardcode
+```
 
 ### Comunicação com o Usuário
 
-- Resumir mudanças em alto nível antes de mostrar código
-- Destacar trade-offs quando houver mais de uma abordagem válida
+- Resumo de alto nível antes de mostrar código
+- Destacar trade-offs quando houver ≥ 2 abordagens válidas
 - Sinalizar riscos e side effects explicitamente
-- Perguntas de clarificação: no máximo 2 por vez, objetivas
+- Máximo 2 perguntas de clarificação por vez
 
-### Checklist Universal Pré-Entrega
+---
+
+## ✅ Checklist Universal Pré-Entrega
 
 ```
 [ ] Testes passando (unitários + integração relevante)
@@ -270,5 +249,63 @@ pytest --cov --cov-report=term-missing
 [ ] Sem regressões no comportamento existente
 [ ] Documentação atualizada (docstrings, comentários, README se aplicável)
 [ ] tasks/lessons.md atualizado se houve correção durante a tarefa
-[ ] Um engenheiro sênior aprovaria isso?
+[ ] tasks/decisions.md atualizado se houve decisão arquitetural
+[ ] "Um engenheiro sênior aprovaria isso?" → SIM
 ```
+
+---
+
+## 💡 Prompt Caching — Guia de Uso
+
+> Aplicável ao usar Claude via API (não Claude Code CLI diretamente).
+
+### Blocos estáveis (cacheable — marcados com `CACHE_MARKER`)
+
+- Princípios Core
+- Padrões arquiteturais
+- Checklists universais
+- Formatos de `tasks/`
+
+### Blocos voláteis (não cachear — mudam por sessão)
+
+- Tarefa ativa (`tasks/todo.md`)
+- Estado atual do código
+- Contexto de erro em investigação
+
+### Estratégia recomendada na API
+
+```python
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {
+                # Bloco estável: envia 1x e caches nas chamadas seguintes
+                "type": "text",
+                "text": CLAUDE_MD_STABLE_CONTENT,
+                "cache_control": {"type": "ephemeral"}
+            },
+            {
+                # Bloco volátil: contexto da sessão atual
+                "type": "text",
+                "text": f"Tarefa atual:\n{todo_md_content}\n\nSolicitação: {user_request}"
+            }
+        ]
+    }
+]
+```
+
+### Economia estimada com caching
+
+| Situação                | Sem cache     | Com cache     | Economia |
+|-------------------------|---------------|---------------|----------|
+| 10 chamadas / sessão    | 10× tokens    | 1× + 9× hit   | ~75–90%  |
+| CLAUDE.md ~2.000 tokens | 20.000 tokens | ~3.800 tokens | ~81%     |
+
+> Cache `ephemeral` dura ~5 minutos de inatividade na API Anthropic.
+> Para sessões longas: reenviar o bloco estável a cada 4 minutos garante hit contínuo.
+
+---
+
+*Versão: 2.0 | Cache marker: stable-root-v1*  
+*Projetos específicos sobrescrevem seções via CLAUDE.md local na raiz do repo.*
