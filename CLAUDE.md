@@ -61,7 +61,7 @@ Antes de qualquer tarefa não trivial, verificar se existe uma skill aplicável:
 
 - Nunca marcar como concluído sem provar funcionamento
 - Pergunta obrigatória: *"Um engenheiro sênior aprovaria isso?"*
-- Python: `ruff check . --fix && ruff format . && mypy . && pytest --cov`
+- Python: `ruff check . --fix && ruff format . && mypy . && pytest --cov -n auto`
 - Unity/C#: todos os testes Unity Test Framework (Edit Mode + Play Mode) passando
 
 ---
@@ -155,7 +155,7 @@ tasks/
 ```bash
 ruff check . --fix && ruff format .
 mypy .
-pytest --cov --cov-report=term-missing
+pytest --cov --cov-report=term-missing -n auto
 ```
 
 ---
