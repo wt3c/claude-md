@@ -85,6 +85,25 @@ Config externa    > Hardcode
 
 ---
 
+## 🔄 Orquestração de Workflow
+
+- Tarefas 3+ etapas → escrever plano em `tasks/todo.md` antes de implementar
+- Decisões arquiteturais → registrar em `tasks/decisions.md` (formato ADR)
+- Após correção do usuário → atualizar `tasks/lessons.md` imediatamente
+- Nunca marcar como concluído sem provar funcionamento
+
+**Subagentes:** usar para contexto isolado, análises paralelas, exploração de código.  
+**Agent Teams:** múltiplas subtarefas independentes → rodar em paralelo.
+
+```
+Precisa de contexto isolado?
+├── SIM → Uma subtarefa?  → Subagente
+│         Várias?         → Agent Team paralelo
+└── NÃO → Claude principal resolve diretamente
+```
+
+---
+
 ## ✅ Checklist Universal Pré-Entrega
 
 ```
