@@ -109,19 +109,47 @@ load_secrets()
 
 ## Variáveis de Ambiente para MCP GitLab
 
-Adicionar ao `.bashrc` / `.zshrc` (Linux) ou Perfil PowerShell (Windows):
+### Linux — `~/.bashrc` ou `~/.zshrc`
 
 ```bash
-# Linux — ~/.bashrc ou ~/.zshrc
 export GITLAB_TOKEN="glpat-xxxxxxxxxxxxxxxxxxxx"
 export GITLAB_URL="https://gitlab-dti.mprj.mp.br"
 ```
 
+### Windows — PowerShell Profile
+
+O Profile do PowerShell é executado automaticamente em toda sessão, equivalente ao `.bashrc`.
+
 ```powershell
-# Windows — $PROFILE
-$env:GITLAB_TOKEN = "glpat-xxxxxxxxxxxxxxxxxxxx"
-$env:GITLAB_URL = "https://gitlab-dti.mprj.mp.br"
+# 1. Verificar se o Profile já existe
+Test-Path $PROFILE
+
+# 2. Criar o Profile caso não exista
+if (-not (Test-Path $PROFILE)) {
+    New-Item -ItemType File -Force -Path $PROFILE
+}
+
+# 3. Abrir o Profile no editor
+notepad $PROFILE
+# ou no VS Code:
+code $PROFILE
 ```
+
+Adicionar ao arquivo aberto:
+
+```powershell
+# GitLab MPRJ
+$env:GITLAB_TOKEN = "glpat-xxxxxxxxxxxxxxxxxxxx"
+$env:GITLAB_URL   = "https://gitlab-dti.mprj.mp.br"
+```
+
+```powershell
+# 4. Recarregar o Profile na sessão atual
+. $PROFILE
+```
+
+> Se o PowerShell bloquear a execução de scripts, habilitar uma vez:
+> `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
 
 ---
 
