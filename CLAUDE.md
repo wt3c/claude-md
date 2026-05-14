@@ -185,6 +185,32 @@ Cache `ephemeral` dura ~5 min. Reenviar o bloco a cada 4 min garante hit contín
 
 ---
 
+### Economia estimada com caching
+
+| Situação                | Sem cache     | Com cache     | Economia |
+|-------------------------|---------------|---------------|----------|
+| 10 chamadas / sessão    | 10× tokens    | 1× + 9× hit   | ~75–90%  |
+| CLAUDE.md ~2.000 tokens | 20.000 tokens | ~3.800 tokens | ~81%     |
+| CLAUDE.md ~4.000 tokens | 40.000 tokens | ~6.200 tokens | ~84%     |
+
+> Cache `ephemeral` dura ~5 minutos de inatividade na API Anthropic.  
+> Para sessões longas: reenviar o bloco estável a cada 4 minutos garante hit contínuo.
+
+### Gestão de Contexto na Sessão
+
+```
+/compact    # Comprime histórico em resumo (IRREVERSÍVEL — salve contexto crítico antes)
+/clear      # Limpa tudo — começa fresh
+/branch     # Bifurca sessão para explorar sem poluir o principal
+/usage      # Dashboard: consumo, custo, rate limits em tempo real
+```
+
+**Boas práticas de custo:**
+
+- Usar `/compact` em sessões longas antes que contexto estoure
+- Subagentes para exploração — não traz todo o código pro contexto principal
+- `--allowedTools` restrito em tarefas simples e headless
+
 ## 🤖 Headless / CI
 
 ```bash
