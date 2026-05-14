@@ -1,0 +1,139 @@
+{
+  "model": "claude-sonnet-4-6",
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
+      "Bash(git branch *)",
+      "Bash(git checkout *)",
+      "Bash(git stash *)",
+      "Bash(uv *)",
+      "Bash(pytest *)",
+      "Bash(ruff *)",
+      "Bash(mypy *)",
+      "Bash(python manage.py *)",
+      "Bash(python -m *)",
+      "Bash(make *)",
+      "Bash(npm run *)",
+      "Bash(npx *)",
+      "Bash(infisical *)",
+      "Bash(ls *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(cat *)",
+      "Bash(echo *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Write(src/**/*)",
+      "Write(apps/**/*)",
+      "Write(tests/**/*)",
+      "Write(tasks/**/*)",
+      "Write(.claude/**/*)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force *)",
+      "Bash(git reset --hard *)",
+      "Bash(DROP *)",
+      "Write(/etc/*)",
+      "Write(~/.ssh/*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '=== Sessão Claude Code Iniciada ===' && echo \"Data: $(date)\" && git log --oneline -5 2>/dev/null && echo '---' && git status --short 2>/dev/null || echo 'Não é um repositório git'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write(.*\\.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ruff check \"$CLAUDE_FILE_PATH\" --fix --quiet 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Write(.*\\.py)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ruff format \"$CLAUDE_FILE_PATH\" --quiet 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Write(.*\\.ts)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx eslint \"$CLAUDE_FILE_PATH\" --fix --quiet 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Write(.*\\.vue)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx eslint \"$CLAUDE_FILE_PATH\" --fix --quiet 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git commit *)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[AUDIT] $(date '+%Y-%m-%d %H:%M:%S') git commit: $CLAUDE_TOOL_INPUT\" >> ~/.claude/audit.log"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(git push *)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[AUDIT] $(date '+%Y-%m-%d %H:%M:%S') git push: $CLAUDE_TOOL_INPUT\" >> ~/.claude/audit.log"
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"],
+      "env": {}
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {}
+    },
+    "gitlab": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-gitlab"],
+      "env": {
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "${GITLAB_TOKEN}",
+        "GITLAB_API_URL": "${GITLAB_URL}"
+      }
+    }
+  }
+}
