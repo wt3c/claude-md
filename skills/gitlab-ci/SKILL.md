@@ -133,19 +133,23 @@ release/*    # preparação de release
 
 ```markdown
 ## O que foi feito
+
 - [ ] Descreva as mudanças
 
 ## Como testar
+
 1. Passo 1
 2. Passo 2
 
 ## Checklist
+
 - [ ] Testes passando no pipeline
 - [ ] Cobertura ≥ 80%
 - [ ] Sem secrets no código
 - [ ] CLAUDE.md local atualizado se necessário
 
 ## Issues relacionadas
+
 Closes #
 ```
 

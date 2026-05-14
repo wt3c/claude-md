@@ -40,7 +40,6 @@ df2 = df.filter(...)
 from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType, StructField, StringType, LongType
 
-
 EXPECTED_SCHEMA = StructType([
     StructField("id", LongType(), nullable=False),
     StructField("name", StringType(), nullable=True),
@@ -68,10 +67,10 @@ def validate_schema(df: DataFrame, expected: StructType) -> None:
 df_grande = df_grande.repartition("data_particao", "regiao")
 
 # SEMPRE particionamento na escrita
-df_resultado.write \
-    .partitionBy("ano", "mes") \
-    .mode("overwrite") \
-    .parquet("hdfs:///dados/saida/")
+df_resultado.write
+.partitionBy("ano", "mes")
+.mode("overwrite")
+.parquet("hdfs:///dados/saida/")
 ```
 
 ## Logging obrigatório por etapa
@@ -101,7 +100,6 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 
-
 DEFAULT_ARGS = {
     "owner": "data-team",
     "retries": 3,
@@ -110,20 +108,19 @@ DEFAULT_ARGS = {
     "email_on_failure": True,
 }
 
-
 with DAG(
-    dag_id="pipeline_exemplo",
-    default_args=DEFAULT_ARGS,
-    start_date=datetime(2026, 1, 1),
-    schedule_interval="0 6 * * *",
-    catchup=False,           # idempotente: não reprocessar datas antigas
-    tags=["producao", "dados"],
+        dag_id="pipeline_exemplo",
+        default_args=DEFAULT_ARGS,
+        start_date=datetime(2026, 1, 1),
+        schedule_interval="0 6 * * *",
+        catchup=False,  # idempotente: não reprocessar datas antigas
+        tags=["producao", "dados"],
 ) as dag:
-
     def extrair(**context) -> None:
         # lógica de extração
         # SEMPRE idempotente: rodar 2x = mesmo resultado
         pass
+
 
     extrair_task = PythonOperator(
         task_id="extrair",
@@ -162,10 +159,10 @@ from pyspark.sql import SparkSession
 
 @pytest.fixture(scope="session")
 def spark() -> SparkSession:
-    return SparkSession.builder \
-        .master("local[2]") \
-        .appName("test") \
-        .getOrCreate()
+    return SparkSession.builder
+    .master("local[2]")
+    .appName("test")
+    .getOrCreate()
 
 
 def test_transformacao(spark: SparkSession) -> None:

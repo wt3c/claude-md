@@ -8,12 +8,15 @@
 **Data**: 2026-05-14
 
 ## Contexto
+
 Precisamos de um gerenciador de pacotes Python rápido, reproduzível e compatível com pyproject.toml.
 
 ## Decisão
+
 Usar UV em todos os projetos Python. Nunca pip diretamente.
 
 ## Consequências
+
 - Instalação de dependências 10-100x mais rápida
 - Lock file determinístico (uv.lock)
 - Compatível com CI/CD via `uv sync`
@@ -27,12 +30,15 @@ Usar UV em todos os projetos Python. Nunca pip diretamente.
 **Data**: 2026-05-14
 
 ## Contexto
+
 Secrets eram gerenciados via arquivos `.env` locais e variáveis GitLab CI, criando riscos de exposição.
 
 ## Decisão
+
 Infisical como fonte única de secrets. Machine Identity para CI/CD. CLI para desenvolvimento local.
 
 ## Consequências
+
 - Rotação centralizada de secrets
 - Auditoria de acesso
 - Requer Infisical CLI instalado localmente
@@ -46,12 +52,15 @@ Infisical como fonte única de secrets. Machine Identity para CI/CD. CLI para de
 **Data**: 2026-05-14
 
 ## Contexto
+
 Código Django com lógica de negócio acoplada a implementações concretas dificultava testes e reutilização.
 
 ## Decisão
+
 Usar `typing.Protocol` para definir interfaces de Repository e Service. Injetar dependências via construtor.
 
 ## Consequências
+
 - Testabilidade alta (fácil mockar protocols)
 - Sem herança múltipla ou acoplamento a Django ORM em services
 - Curva de aprendizado inicial para o time
