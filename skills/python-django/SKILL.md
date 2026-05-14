@@ -128,29 +128,38 @@ uv run pytest --cov --cov-report=term-missing -n auto
 ## Infisical — Uso correto
 
 ```python
-import os
-from infisical_sdk import InfisicalClient
+# settings/base.py — sempre no topo, antes de qualquer os.environ[]
+from secretsloader import load_secrets
 
-# inicialização (uma vez, no settings ou AppConfig.ready())
-_client = InfisicalClient(
-    token=os.environ["INFISICAL_TOKEN"],
-    site_url=os.environ.get("INFISICAL_URL", "https://app.infisical.com"),
-)
-
-
-def get_secret(name: str, environment: str = "dev") -> str:
-    return _client.secrets.get(secret_name=name, environment=environment).secret_value
+load_secrets()
 ```
 
-```bash
-# Desenvolvimento local
-infisical run --env=dev -- uv run python manage.py runserver
+O `load_secrets()` lê as variáveis de conexão do `.env` e injeta todos os secrets  
+do projeto Infisical no `os.environ`. Após a chamada, acessar normalmente:
 
-# CI/CD — Machine Identity
-export INFISICAL_TOKEN=$(infisical login --method=universal-auth \
-  --client-id=$INFISICAL_CLIENT_ID \
-  --client-secret=$INFISICAL_CLIENT_SECRET \
-  --plain)
+```python
+import os
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ["DB_NAME"],
+        "USER": os.environ["DB_USER"],
+        "PASSWORD": os.environ["DB_PASSWORD"],
+        "HOST": os.environ["DB_HOST"],
+        "PORT": os.environ["DB_PORT"],
+    }
+}
+```
+
+`.env` contém apenas as credenciais de acesso ao Infisical (nunca commitar):
+
+```dotenv
+INFISICAL_PROJECT_ID=
+INFISICAL_TOKEN=
+INFISICAL_SITE_URL=https://ncd-infisical.mprj.mp.br/
+INFISICAL_PORT=80
+INFISICAL_ENVIRONMENT_SLUG=prod
 ```
 
 ## Checklist pré-entrega Python/Django
