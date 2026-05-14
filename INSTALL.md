@@ -107,6 +107,50 @@ load_secrets()
 
 ---
 
+## Token GitLab — Criação e Permissões
+
+Acesse: `https://gitlab-dti.mprj.mp.br/-/user_settings/personal_access_tokens`
+
+### Configurações do token
+
+| Campo       | Valor recomendado                          |
+|-------------|---------------------------------------------|
+| Token name  | `claude-code-mprj`                          |
+| Expiration  | 1 ano (renovar no vencimento)               |
+| Scopes      | ver tabela abaixo                           |
+
+### Scopes — o máximo que boas práticas permitem
+
+| Scope              | Marcar | Motivo                                                       |
+|--------------------|--------|--------------------------------------------------------------|
+| `api`              | ✅     | Acesso completo à API REST — leitura e escrita em projetos, MRs, issues, pipelines, registry |
+| `read_user`        | ✅     | Ler dados do próprio perfil                                  |
+| `read_repository`  | ✅     | Clonar repositórios privados via HTTPS                       |
+| `write_repository` | ✅     | Push via HTTPS (necessário para o Claude Code fazer push)    |
+| `read_registry`    | ✅     | Pull de imagens do Container Registry                        |
+| `write_registry`   | ✅     | Push de imagens ao Container Registry                        |
+| `create_runner`    | ❌     | Desnecessário — não registramos runners via Claude           |
+| `manage_runner`    | ❌     | Desnecessário                                                |
+| `ai_features`      | ❌     | Recursos GitLab AI — não utilizado                           |
+| `k8s_proxy`        | ❌     | Proxy Kubernetes — não utilizado                             |
+| `sudo`             | ❌     | Impersonar outros usuários — nunca conceder                  |
+
+> **Nota:** o scope `api` já inclui acesso de leitura e escrita à maioria dos recursos.
+> Os scopes `read_repository` e `write_repository` são necessários separadamente para
+> operações git via HTTPS (clone/push), que o `api` não cobre.
+
+### Após criar
+
+```bash
+# Copiar o token gerado (exibido apenas uma vez) e definir nas variáveis de ambiente
+export GITLAB_TOKEN="glpat-xxxxxxxxxxxxxxxxxxxx"
+```
+
+> Guardar o token em local seguro — o GitLab não exibe novamente após fechar a página.  
+> Se perder, revogar e criar um novo.
+
+---
+
 ## Variáveis de Ambiente para MCP GitLab
 
 ### Linux — `~/.bashrc` ou `~/.zshrc`
