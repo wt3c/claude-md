@@ -299,8 +299,6 @@ class UserRepository(Protocol):
 - Repository sempre recebe e retorna domain objects
   EOF
 
-```
-
 ### Skill vs CLAUDE.md
 
 - **CLAUDE.md** → contexto estático que raramente muda (stack, comandos, padrões gerais)
@@ -310,20 +308,21 @@ class UserRepository(Protocol):
 
 ## 7. Hooks
 
-Hooks são **comandos shell, HTTP endpoints ou prompts de LLM** que rodam automaticamente em pontos específicos do ciclo de vida do Claude Code.
+Hooks são **comandos shell, HTTP endpoints ou prompts de LLM** que rodam automaticamente em pontos específicos do ciclo
+de vida do Claude Code.
 
 ### Eventos disponíveis
 
-| Evento | Quando dispara |
-|---|---|
-| `SessionStart` | Início ou retomada de sessão |
-| `PreToolUse` | Antes de qualquer tool call |
-| `PostToolUse` | Depois de tool call (sucesso) |
-| `PostToolUseFailure` | Depois de tool call (falha) |
-| `PermissionRequest` | Quando Claude pede permissão |
-| `PermissionDenied` | Permissão negada |
-| `FileChanged` | Arquivo do projeto alterado |
-| `Notification` | Mudança de status |
+| Evento               | Quando dispara                |
+|----------------------|-------------------------------|
+| `SessionStart`       | Início ou retomada de sessão  |
+| `PreToolUse`         | Antes de qualquer tool call   |
+| `PostToolUse`        | Depois de tool call (sucesso) |
+| `PostToolUseFailure` | Depois de tool call (falha)   |
+| `PermissionRequest`  | Quando Claude pede permissão  |
+| `PermissionDenied`   | Permissão negada              |
+| `FileChanged`        | Arquivo do projeto alterado   |
+| `Notification`       | Mudança de status             |
 
 ### Configuração em `.claude/settings.json`
 
