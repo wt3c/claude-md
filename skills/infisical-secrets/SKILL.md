@@ -16,81 +16,74 @@ Tudo passa pelo Infisical.
 ## Instalação (UV)
 
 ```bash
-uv add infisical-sdk
+uv add secretsloader
 ```
 
-## CLI — Desenvolvimento Local
-
-```bash
-# Autenticar (uma vez)
-infisical login
-
-# Rodar qualquer comando com secrets injetados
-infisical run --env=dev -- python manage.py runserver
-infisical run --env=dev -- uv run pytest -n auto
-infisical run --env=dev -- uv run python manage.py migrate
-
-# Ver secrets do ambiente
-infisical secrets --env=dev
-```
-
-## SDK Python — Integração em Django
+## Uso — carregamento de secrets
 
 ```python
-# config/infisical.py
-import os
-from functools import lru_cache
-from infisical_sdk import InfisicalClient
+from secretsloader import load_secrets
 
-
-@lru_cache(maxsize=None)
-def get_infisical_client() -> InfisicalClient:
-    return InfisicalClient(
-        token=os.environ["INFISICAL_TOKEN"],
-        site_url=os.environ.get("INFISICAL_URL", "https://app.infisical.com"),
-    )
-
-
-def get_secret(name: str, environment: str | None = None) -> str:
-    env = environment or os.environ.get("APP_ENV", "dev")
-    client = get_infisical_client()
-    return client.secrets.get(secret_name=name, environment=env).secret_value
+load_secrets()
 ```
+
+Chamar no início da aplicação (antes de qualquer acesso a variáveis de ambiente).  
+Em Django: chamar em `AppConfig.ready()` ou no topo de `settings/base.py`.
+
+## .env — Variáveis de conexão com o Infisical
+
+O `.env` contém **apenas** as credenciais de acesso ao Infisical, não os secrets da aplicação.  
+O `load_secrets()` usa essas variáveis para buscar e injetar todos os secrets do projeto no ambiente.
+
+```dotenv
+# Infisical
+INFISICAL_PROJECT_ID=
+INFISICAL_TOKEN=
+INFISICAL_SITE_URL=https://ncd-infisical.mprj.mp.br/
+INFISICAL_PORT=80
+
+# dev | staging | prod
+INFISICAL_ENVIRONMENT_SLUG=prod
+```
+
+## Integração com Django
 
 ```python
 # settings/base.py
-from config.infisical import get_secret
+from secretsloader import load_secrets
+
+load_secrets()  # injeta os secrets do Infisical no os.environ
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": get_secret("DB_NAME"),
-        "USER": get_secret("DB_USER"),
-        "PASSWORD": get_secret("DB_PASSWORD"),
-        "HOST": get_secret("DB_HOST"),
-        "PORT": get_secret("DB_PORT", environment="shared"),
+        "NAME": os.environ["DB_NAME"],
+        "USER": os.environ["DB_USER"],
+        "PASSWORD": os.environ["DB_PASSWORD"],
+        "HOST": os.environ["DB_HOST"],
+        "PORT": os.environ["DB_PORT"],
     }
 }
 ```
 
-## CI/CD — Machine Identity (GitLab)
+## CI/CD — GitLab
 
 ```yaml
 # .gitlab-ci.yml
+# As variáveis do .env são definidas como GitLab CI Variables (masked):
+# INFISICAL_PROJECT_ID, INFISICAL_TOKEN, INFISICAL_SITE_URL, INFISICAL_ENVIRONMENT_SLUG
+# O secretsloader carrega tudo automaticamente via load_secrets()
 before_script:
-  - pip install infisical --quiet
-  - |
-    export INFISICAL_TOKEN=$(infisical login \
-      --method=universal-auth \
-      --client-id=$INFISICAL_CLIENT_ID \
-      --client-secret=$INFISICAL_CLIENT_SECRET \
-      --plain)
+  - uv sync
+  - uv run python -c "from secretsloader import load_secrets; load_secrets()"
 ```
 
 ```
-# GitLab CI Variables (apenas estas — não são secrets reais):
-INFISICAL_CLIENT_ID     → ID da Machine Identity do projeto
-INFISICAL_CLIENT_SECRET → Secret da Machine Identity (marcar como "Masked")
+# GitLab CI Variables (masked — não são secrets da aplicação):
+INFISICAL_PROJECT_ID      → ID do projeto no Infisical
+INFISICAL_TOKEN           → Token de acesso (Machine Identity)
+INFISICAL_SITE_URL        → https://ncd-infisical.mprj.mp.br/
+INFISICAL_ENVIRONMENT_SLUG → dev | staging | prod
 ```
 
 ## Estrutura de Ambientes

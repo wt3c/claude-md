@@ -4,7 +4,8 @@
 
 - [PADRÃO] Usar SQLAlchemy engine para Pandas ↔ banco (evita UserWarning DBAPI2)
 - [PADRÃO] UV para todos os projetos Python — nunca pip direto
-- [PADRÃO] `infisical run --env=dev --` como prefixo para qualquer comando local com secrets
+- [PADRÃO] `from secretsloader import load_secrets; load_secrets()` no topo do settings — injeta todos os secrets do Infisical no os.environ via .env de conexão
+- [ANTIPADRÃO] Usar `infisical-sdk` diretamente — usar a lib `secretsloader` do MPRJ
 - [ANTIPADRÃO] `Model.objects.all()` sem select_related quando há FKs acessadas — causa N+1
 - [ANTIPADRÃO] Lógica de negócio em views — mover para services
 
