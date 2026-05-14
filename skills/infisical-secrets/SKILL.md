@@ -68,22 +68,27 @@ DATABASES = {
 
 ## CI/CD — GitLab
 
-```yaml
-# .gitlab-ci.yml
-# As variáveis do .env são definidas como GitLab CI Variables (masked):
-# INFISICAL_PROJECT_ID, INFISICAL_TOKEN, INFISICAL_SITE_URL, INFISICAL_ENVIRONMENT_SLUG
-# O secretsloader carrega tudo automaticamente via load_secrets()
-before_script:
-  - uv sync
-  - uv run python -c "from secretsloader import load_secrets; load_secrets()"
-```
+O `load_secrets()` é chamado automaticamente no startup da aplicação (settings).  
+No CI, basta definir as variáveis de conexão como **GitLab CI Variables masked** —  
+não é necessário nenhum passo adicional no `before_script`.
 
 ```
 # GitLab CI Variables (masked — não são secrets da aplicação):
-INFISICAL_PROJECT_ID      → ID do projeto no Infisical
-INFISICAL_TOKEN           → Token de acesso (Machine Identity)
-INFISICAL_SITE_URL        → https://ncd-infisical.mprj.mp.br/
+INFISICAL_PROJECT_ID       → ID do projeto no Infisical
+INFISICAL_TOKEN            → Token de acesso (Machine Identity)
+INFISICAL_SITE_URL         → https://ncd-infisical.mprj.mp.br/
+INFISICAL_PORT             → 80
 INFISICAL_ENVIRONMENT_SLUG → dev | staging | prod
+```
+
+```yaml
+# .gitlab-ci.yml — nenhum passo extra necessário
+before_script:
+  - uv sync
+
+test:
+  script:
+    - uv run pytest -n auto --cov  # load_secrets() é chamado pelo settings.py
 ```
 
 ## Estrutura de Ambientes
