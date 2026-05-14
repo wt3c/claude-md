@@ -24,7 +24,7 @@ uv run python manage.py makemigrations     # gerar migration
 uv run pytest -n auto --cov               # testes com cobertura
 uv run ruff check . --fix && uv run ruff format .
 uv run mypy .
-infisical run -- uv run python manage.py runserver
+uv run python manage.py runserver
 ```
 
 ## TDD — Ciclo obrigatório
