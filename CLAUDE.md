@@ -39,6 +39,7 @@
 | PDFs para leitura              | `/mnt/skills/public/pdf-reading/SKILL.md`     |
 
 **Regra:** carregar a skill ANTES de escrever qualquer código ou criar qualquer arquivo.
+
 ---
 
 ## 💻 Ambiente
