@@ -19,6 +19,8 @@
 
 ## 🧠 Skills — Carregar antes de qualquer tarefa não trivial
 
+<!-- CACHE_MARKER: skills-stable -->
+
 | Contexto                       | Skill                                         |
 |--------------------------------|-----------------------------------------------|
 | Python / Django / DRF          | `~/.claude/skills/python-django/SKILL.md`     |
@@ -67,6 +69,8 @@
 
 ## 🏛️ Princípios Core
 
+<!-- CACHE_MARKER: principles-stable -->
+
 | Princípio      | Regra                                                            |
 |----------------|------------------------------------------------------------------|
 | Simplicidade   | Mudança mínima; mínimo de código impactado                       |
@@ -105,6 +109,8 @@ Precisa de contexto isolado?
 ---
 
 ## ✅ Checklist Universal Pré-Entrega
+
+<!-- CACHE_MARKER: checklist-stable -->
 
 ```
 [ ] Testes passando — pytest -n auto (ou equivalente da stack)
