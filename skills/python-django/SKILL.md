@@ -71,7 +71,9 @@ User = get_user_model()
 
 class UserRepository(Protocol):
     def get_by_id(self, user_id: int) -> User: ...
+
     def save(self, user: User) -> User: ...
+
     def find_by_email(self, email: str) -> User | None: ...
 
 

@@ -19,33 +19,33 @@
 
 ## 🧠 Skills — Carregar antes de qualquer tarefa não trivial
 
-| Contexto                       | Skill                                              |
-|--------------------------------|----------------------------------------------------|
-| Python / Django / DRF          | `~/.claude/skills/python-django/SKILL.md`          |
-| Vue.js / Frontend              | `~/.claude/skills/vue-frontend/SKILL.md`           |
-| PySpark / Airflow / Hadoop     | `~/.claude/skills/data-engineering/SKILL.md`       |
-| C# / Unity Android             | `~/.claude/skills/unity-android/SKILL.md`          |
-| GitLab CI/CD (MPRJ)            | `~/.claude/skills/gitlab-ci/SKILL.md`              |
-| Infisical (secrets)            | `~/.claude/skills/infisical-secrets/SKILL.md`      |
-| OpenTelemetry / Dynatrace      | `~/.claude/skills/opentelemetry/SKILL.md`          |
-| Documentos Word / .docx        | `/mnt/skills/public/docx/SKILL.md`                 |
-| PDFs (criar ou extrair)        | `/mnt/skills/public/pdf/SKILL.md`                  |
-| Apresentações .pptx            | `/mnt/skills/public/pptx/SKILL.md`                 |
-| Planilhas .xlsx                | `/mnt/skills/public/xlsx/SKILL.md`                 |
-| UI / Frontend / Componentes    | `/mnt/skills/public/frontend-design/SKILL.md`      |
-| Arquivos enviados pelo usuário | `/mnt/skills/public/file-reading/SKILL.md`         |
-| PDFs para leitura              | `/mnt/skills/public/pdf-reading/SKILL.md`          |
+| Contexto                       | Skill                                         |
+|--------------------------------|-----------------------------------------------|
+| Python / Django / DRF          | `~/.claude/skills/python-django/SKILL.md`     |
+| Vue.js / Frontend              | `~/.claude/skills/vue-frontend/SKILL.md`      |
+| PySpark / Airflow / Hadoop     | `~/.claude/skills/data-engineering/SKILL.md`  |
+| C# / Unity Android             | `~/.claude/skills/unity-android/SKILL.md`     |
+| GitLab CI/CD (MPRJ)            | `~/.claude/skills/gitlab-ci/SKILL.md`         |
+| Infisical (secrets)            | `~/.claude/skills/infisical-secrets/SKILL.md` |
+| OpenTelemetry / Dynatrace      | `~/.claude/skills/opentelemetry/SKILL.md`     |
+| Documentos Word / .docx        | `/mnt/skills/public/docx/SKILL.md`            |
+| PDFs (criar ou extrair)        | `/mnt/skills/public/pdf/SKILL.md`             |
+| Apresentações .pptx            | `/mnt/skills/public/pptx/SKILL.md`            |
+| Planilhas .xlsx                | `/mnt/skills/public/xlsx/SKILL.md`            |
+| UI / Frontend / Componentes    | `/mnt/skills/public/frontend-design/SKILL.md` |
+| Arquivos enviados pelo usuário | `/mnt/skills/public/file-reading/SKILL.md`    |
+| PDFs para leitura              | `/mnt/skills/public/pdf-reading/SKILL.md`     |
 
 ---
 
 ## 💻 Ambiente
 
-| Sistema    | Detalhes                                     |
-|------------|----------------------------------------------|
-| Windows 11 | Dev local principal — VS Code, Docker Desktop |
-| Linux Arch | Garuda Linux — terminal, pipelines, servidores |
-| Linux Shell | Fish / Bash                                  |
-| Windows Shell | PowerShell + WSL2                          |
+| Sistema       | Detalhes                                       |
+|---------------|------------------------------------------------|
+| Windows 11    | Dev local principal — VS Code, Docker Desktop  |
+| Linux Arch    | Garuda Linux — terminal, pipelines, servidores |
+| Linux Shell   | Fish / Bash                                    |
+| Windows Shell | PowerShell + WSL2                              |
 
 - Paths: `pathlib.Path` — nunca concatenação de strings com `/`
 - Secrets: sempre via Infisical — nunca `.env` commitado
@@ -55,25 +55,25 @@
 
 ## 🔌 MCP Servers
 
-| Server       | Uso                                        | Escopo  |
-|--------------|--------------------------------------------|---------|
-| `gitlab`     | MRs, issues, pipelines no MPRJ GitLab      | global  |
-| `filesystem` | Acesso estruturado a arquivos              | global  |
-| `postgres`   | Queries diretas no banco de dev            | local   |
-| `memory`     | Persistência de contexto cross-session     | global  |
-| `playwright` | Testes E2E                                 | project |
+| Server       | Uso                                    | Escopo  |
+|--------------|----------------------------------------|---------|
+| `gitlab`     | MRs, issues, pipelines no MPRJ GitLab  | global  |
+| `filesystem` | Acesso estruturado a arquivos          | global  |
+| `postgres`   | Queries diretas no banco de dev        | local   |
+| `memory`     | Persistência de contexto cross-session | global  |
+| `playwright` | Testes E2E                             | project |
 
 ---
 
 ## 🏛️ Princípios Core
 
-| Princípio      | Regra                                                               |
-|----------------|---------------------------------------------------------------------|
-| Simplicidade   | Mudança mínima; mínimo de código impactado                          |
-| Sem Atalhos    | Causa raiz sempre; `TODO` sem data/responsável é proibido           |
-| Impacto Mínimo | Mudanças incrementais e reversíveis                                 |
-| Sem Gambiarras | Se parece gambiarra → implementar a solução elegante                |
-| Autonomia      | Bug report → corrigir direto, sem pedir orientação passo a passo    |
+| Princípio      | Regra                                                            |
+|----------------|------------------------------------------------------------------|
+| Simplicidade   | Mudança mínima; mínimo de código impactado                       |
+| Sem Atalhos    | Causa raiz sempre; `TODO` sem data/responsável é proibido        |
+| Impacto Mínimo | Mudanças incrementais e reversíveis                              |
+| Sem Gambiarras | Se parece gambiarra → implementar a solução elegante             |
+| Autonomia      | Bug report → corrigir direto, sem pedir orientação passo a passo |
 
 ```
 Composição        > Herança
@@ -104,10 +104,23 @@ Config externa    > Hardcode
 
 ```json
 // NUNCA
-{ "permissions": { "allow": ["Bash(*)"] } }
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)"
+    ]
+  }
+}
 
 // CORRETO
-{ "permissions": { "allow": ["Bash(git *)", "Bash(uv *)"] } }
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(uv *)"
+    ]
+  }
+}
 ```
 
 - Hook `PreToolUse` registra git commit/push em `~/.claude/audit.log`

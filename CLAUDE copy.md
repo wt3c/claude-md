@@ -22,12 +22,12 @@
 
 ## 💻 Ambiente
 
-| Sistema         | Detalhes                                    |
-|-----------------|---------------------------------------------|
-| Windows 11      | Dev local principal, VS Code, Docker Desktop|
-| Linux Arch      | Garuda Linux — terminal, pipelines, servers |
-| Shell (Linux)   | Fish / Bash                                 |
-| Shell (Windows) | PowerShell + WSL2                           |
+| Sistema         | Detalhes                                     |
+|-----------------|----------------------------------------------|
+| Windows 11      | Dev local principal, VS Code, Docker Desktop |
+| Linux Arch      | Garuda Linux — terminal, pipelines, servers  |
+| Shell (Linux)   | Fish / Bash                                  |
+| Shell (Windows) | PowerShell + WSL2                            |
 
 ### Comandos cross-platform
 
@@ -41,22 +41,22 @@
 
 Antes de qualquer tarefa não trivial, verificar se existe uma skill aplicável e carregá-la:
 
-| Contexto                        | Skill a carregar                                         |
-|---------------------------------|----------------------------------------------------------|
-| Python / Django / DRF           | `~/.claude/skills/python-django/SKILL.md`                |
-| Vue.js / Frontend               | `~/.claude/skills/vue-frontend/SKILL.md`                 |
-| PySpark / Airflow / Hadoop      | `~/.claude/skills/data-engineering/SKILL.md`             |
-| C# / Unity Android              | `~/.claude/skills/unity-android/SKILL.md`                |
-| GitLab CI/CD (MPRJ)             | `~/.claude/skills/gitlab-ci/SKILL.md`                    |
-| Infisical (secrets management)  | `~/.claude/skills/infisical-secrets/SKILL.md`            |
-| OpenTelemetry / Dynatrace       | `~/.claude/skills/opentelemetry/SKILL.md`                |
-| Documentos Word / .docx         | `/mnt/skills/public/docx/SKILL.md`                       |
-| PDFs (criar ou extrair)         | `/mnt/skills/public/pdf/SKILL.md`                        |
-| Apresentações .pptx             | `/mnt/skills/public/pptx/SKILL.md`                       |
-| Planilhas .xlsx                 | `/mnt/skills/public/xlsx/SKILL.md`                       |
-| UI / Frontend / Componentes     | `/mnt/skills/public/frontend-design/SKILL.md`            |
-| Arquivos enviados pelo usuário  | `/mnt/skills/public/file-reading/SKILL.md`               |
-| PDFs para leitura               | `/mnt/skills/public/pdf-reading/SKILL.md`                |
+| Contexto                       | Skill a carregar                              |
+|--------------------------------|-----------------------------------------------|
+| Python / Django / DRF          | `~/.claude/skills/python-django/SKILL.md`     |
+| Vue.js / Frontend              | `~/.claude/skills/vue-frontend/SKILL.md`      |
+| PySpark / Airflow / Hadoop     | `~/.claude/skills/data-engineering/SKILL.md`  |
+| C# / Unity Android             | `~/.claude/skills/unity-android/SKILL.md`     |
+| GitLab CI/CD (MPRJ)            | `~/.claude/skills/gitlab-ci/SKILL.md`         |
+| Infisical (secrets management) | `~/.claude/skills/infisical-secrets/SKILL.md` |
+| OpenTelemetry / Dynatrace      | `~/.claude/skills/opentelemetry/SKILL.md`     |
+| Documentos Word / .docx        | `/mnt/skills/public/docx/SKILL.md`            |
+| PDFs (criar ou extrair)        | `/mnt/skills/public/pdf/SKILL.md`             |
+| Apresentações .pptx            | `/mnt/skills/public/pptx/SKILL.md`            |
+| Planilhas .xlsx                | `/mnt/skills/public/xlsx/SKILL.md`            |
+| UI / Frontend / Componentes    | `/mnt/skills/public/frontend-design/SKILL.md` |
+| Arquivos enviados pelo usuário | `/mnt/skills/public/file-reading/SKILL.md`    |
+| PDFs para leitura              | `/mnt/skills/public/pdf-reading/SKILL.md`     |
 
 **Regra:** carregar a skill ANTES de escrever qualquer código ou criar qualquer arquivo.
 
@@ -66,13 +66,13 @@ Antes de qualquer tarefa não trivial, verificar se existe uma skill aplicável 
 
 Os servidores MCP abaixo estão pré-configurados em `~/.claude/settings.json`.
 
-| Server           | Uso principal                                   | Escopo   |
-|------------------|-------------------------------------------------|----------|
-| `gitlab`         | PRs, issues, pipelines no MPRJ GitLab           | global   |
-| `filesystem`     | Acesso estruturado a arquivos do projeto        | global   |
-| `postgres`       | Queries diretas no banco de desenvolvimento     | local    |
-| `memory`         | Persistência de contexto cross-session          | global   |
-| `playwright`     | Testes E2E automatizados                        | project  |
+| Server       | Uso principal                               | Escopo  |
+|--------------|---------------------------------------------|---------|
+| `gitlab`     | PRs, issues, pipelines no MPRJ GitLab       | global  |
+| `filesystem` | Acesso estruturado a arquivos do projeto    | global  |
+| `postgres`   | Queries diretas no banco de desenvolvimento | local   |
+| `memory`     | Persistência de contexto cross-session      | global  |
+| `playwright` | Testes E2E automatizados                    | project |
 
 ### Comandos de uso na sessão
 
@@ -164,18 +164,22 @@ tasks/
 # Tarefa: [nome]
 
 ## Objetivo
+
 [descrição + critério de aceite]
 
 ## Plano
+
 - [ ] Etapa 1
 - [x] Etapa 2 (concluída)
 
 ## Verificação
+
 - [ ] Testes passando
 - [ ] Lint sem erros
 - [ ] Checklist pré-entrega
 
 ## Review
+
 [resumo, decisões, impacto]
 ```
 
@@ -185,12 +189,15 @@ tasks/
 # Lições Aprendidas
 
 ## Python / Django
+
 - [PADRÃO] Usar SQLAlchemy engine para Pandas ↔ banco (evita UserWarning DBAPI2)
 
 ## PySpark
+
 - [ANTIPADRÃO] .collect() sem amostragem prévia → estoura memória do driver
 
 ## C# / Unity
+
 - [PADRÃO] Evitar singletons estáticos → preferir referências diretas ou UnityEvents
 ```
 
@@ -203,7 +210,9 @@ tasks/
 **Data**: YYYY-MM-DD
 
 ## Contexto
+
 ## Decisão
+
 ## Consequências
 ```
 
@@ -312,16 +321,17 @@ chore(scope): descrição curta
 
 ```typescript
 // Sempre <script setup lang="ts"> — sem defineComponent()
-<script setup lang="ts">
-import { ref, computed } from 'vue'
+<script setup
+lang = "ts" >
+import {ref, computed} from 'vue'
 
 interface Props {
-  userId: number
+    userId: number
 }
 
 const props = defineProps<Props>()
 const isLoading = ref(false)
-</script>
+    < /script>
 ```
 
 ### Qualidade
@@ -512,10 +522,23 @@ Config externa    > Hardcode
 
 ```json
 // NUNCA
-{ "permissions": { "allow": ["Bash(*)"] } }
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)"
+    ]
+  }
+}
 
 // CORRETO — sempre específico
-{ "permissions": { "allow": ["Bash(git *)", "Bash(pytest *)"] } }
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(pytest *)"
+    ]
+  }
+}
 ```
 
 ### Secrets e Credenciais
@@ -609,6 +632,7 @@ response = client.messages.create(
 ```
 
 **Boas práticas de custo:**
+
 - Usar `/compact` em sessões longas antes que contexto estoure
 - Subagentes para exploração — não traz todo o código pro contexto principal
 - `--allowedTools` restrito em tarefas simples e headless
