@@ -123,12 +123,12 @@ Acesse: `https://gitlab-dti.mprj.mp.br/-/user_settings/personal_access_tokens`
 
 | Scope              | Marcar | Motivo                                                       |
 |--------------------|--------|--------------------------------------------------------------|
-| `api`              | ✅     | Acesso completo à API REST — leitura e escrita em projetos, MRs, issues, pipelines, registry |
-| `read_user`        | ✅     | Ler dados do próprio perfil                                  |
-| `read_repository`  | ✅     | Clonar repositórios privados via HTTPS                       |
-| `write_repository` | ✅     | Push via HTTPS (necessário para o Claude Code fazer push)    |
+| `api`              | ✅     | Acesso completo à API REST — projetos, MRs, issues, pipelines, registry, perfil |
+| `read_repository`  | ✅     | Clonar repositórios privados via HTTPS (`api` não cobre git over HTTPS) |
+| `write_repository` | ✅     | Push via HTTPS — necessário para o Claude Code fazer push    |
 | `read_registry`    | ✅     | Pull de imagens do Container Registry                        |
 | `write_registry`   | ✅     | Push de imagens ao Container Registry                        |
+| `read_user`        | ❌     | Redundante — já coberto pelo `api`                           |
 | `create_runner`    | ❌     | Desnecessário — não registramos runners via Claude           |
 | `manage_runner`    | ❌     | Desnecessário                                                |
 | `ai_features`      | ❌     | Recursos GitLab AI — não utilizado                           |
