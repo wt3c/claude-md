@@ -110,6 +110,21 @@ class UserService:
 - Nunca `Model.objects.all()` em views — sempre filtrar ou paginar
 - Migrations: nunca modificar migration já aplicada em produção
 
+## Legado
+
+- Escrever testes de caracterização **antes** de refatorar
+- Padrões incrementais: Chain of Responsibility, Repository, Strategy
+- Nunca quebrar API pública sem aprovação explícita
+- Commits atômicos e rastreáveis
+
+## Ciclo de Qualidade
+
+```bash
+uv run ruff check . --fix && uv run ruff format .
+uv run mypy .
+uv run pytest --cov --cov-report=term-missing -n auto
+```
+
 ## Infisical — Uso correto
 
 ```python
