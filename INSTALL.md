@@ -72,7 +72,42 @@ Get-ChildItem "$env:USERPROFILE\.claude\"
 
 ---
 
-## Variáveis de Ambiente Obrigatórias
+## .env — Infisical (por projeto)
+
+Cada projeto precisa de um `.env` na raiz com as credenciais de conexão ao Infisical.  
+**Nunca commitar este arquivo** — adicionar ao `.gitignore`.
+
+```dotenv
+# Infisical — credenciais de conexão (não são secrets da aplicação)
+INFISICAL_PROJECT_ID=
+INFISICAL_TOKEN=
+INFISICAL_SITE_URL=https://ncd-infisical.mprj.mp.br/
+INFISICAL_PORT=80
+
+# dev | staging | prod
+INFISICAL_ENVIRONMENT_SLUG=dev
+```
+
+O `secretsloader` lê este `.env`, conecta ao Infisical e injeta todos os secrets do
+projeto no `os.environ`. Chamar no topo do `settings/base.py`:
+
+```python
+from secretsloader import load_secrets
+
+load_secrets()
+```
+
+### .gitignore obrigatório em todo projeto
+
+```gitignore
+.env
+.env.*
+*.env
+```
+
+---
+
+## Variáveis de Ambiente para MCP GitLab
 
 Adicionar ao `.bashrc` / `.zshrc` (Linux) ou Perfil PowerShell (Windows):
 
@@ -80,15 +115,12 @@ Adicionar ao `.bashrc` / `.zshrc` (Linux) ou Perfil PowerShell (Windows):
 # Linux — ~/.bashrc ou ~/.zshrc
 export GITLAB_TOKEN="glpat-xxxxxxxxxxxxxxxxxxxx"
 export GITLAB_URL="https://gitlab-dti.mprj.mp.br"
-export INFISICAL_TOKEN=""   # deixar vazio — preenchido pelo infisical login
-export APP_ENV="dev"
 ```
 
 ```powershell
 # Windows — $PROFILE
 $env:GITLAB_TOKEN = "glpat-xxxxxxxxxxxxxxxxxxxx"
 $env:GITLAB_URL = "https://gitlab-dti.mprj.mp.br"
-$env:APP_ENV = "dev"
 ```
 
 ---
