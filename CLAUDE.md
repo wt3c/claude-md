@@ -38,13 +38,14 @@
 | Arquivos enviados pelo usuário | `/mnt/skills/public/file-reading/SKILL.md`    |
 | PDFs para leitura              | `/mnt/skills/public/pdf-reading/SKILL.md`     |
 
+**Regra:** carregar a skill ANTES de escrever qualquer código ou criar qualquer arquivo.
 ---
 
 ## 💻 Ambiente
 
 | Sistema       | Detalhes                                       |
 |---------------|------------------------------------------------|
-| Windows 11    | Dev local principal — VS Code, Docker Desktop  |
+| Windows 11    | Dev local principal — Pycharm, Docker Desktop  |
 | Linux Arch    | Garuda Linux — terminal, pipelines, servidores |
 | Linux Shell   | Fish / Bash                                    |
 | Windows Shell | PowerShell + WSL2                              |
@@ -77,7 +78,10 @@
 | Sem Atalhos    | Causa raiz sempre; `TODO` sem data/responsável é proibido        |
 | Impacto Mínimo | Mudanças incrementais e reversíveis                              |
 | Sem Gambiarras | Se parece gambiarra → implementar a solução elegante             |
+| Elegância      | Simples e claro > inteligente e obscuro                          |
 | Autonomia      | Bug report → corrigir direto, sem pedir orientação passo a passo |
+
+### Padrões Arquiteturais Preferidos
 
 ```
 Composição        > Herança
@@ -86,6 +90,15 @@ Injeção de dep.   > Instanciação direta
 Repositório       > Acesso direto ao banco
 Config externa    > Hardcode
 ```
+
+---
+
+### Comunicação com o Usuário
+
+- Resumo de alto nível antes de mostrar código
+- Destacar trade-offs quando houver ≥ 2 abordagens válidas
+- Sinalizar riscos e side effects explicitamente
+- Máximo 2 perguntas de clarificação por vez
 
 ---
 
@@ -148,8 +161,13 @@ Precisa de contexto isolado?
 }
 ```
 
-- Hook `PreToolUse` registra git commit/push em `~/.claude/audit.log`
-- Configs sensíveis sempre com `--scope local`
+---
+
+### Auditoria em Ambiente Corporativo (MPRJ)
+
+- Hook `PreToolUse` registra todos os comandos Bash em `~/.claude/audit.log`
+- Configs sensíveis sempre com `--scope local` (não commitadas)
+- Revisar diff antes de aceitar qualquer mudança em arquivo crítico
 
 ---
 
