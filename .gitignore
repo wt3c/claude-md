@@ -1,2 +1,6 @@
 # IDEs
 .idea/
+
+# Credenciais e config local (nunca commitar)
+.env
+settings.local.json
