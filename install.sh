@@ -105,20 +105,123 @@ _append_bash_zsh() {
 
 # --- Claude Code: múltiplas contas ---
 
+# --- Claude Code: Model Routing -----------------------------------------------
+_CLAUDE_PRO_MODEL=""
+
+_claude_model_priority=("claude-sonnet-4-6" "claude-haiku-4-5-20251001")
+
+_get_anthropic_models() {
+    local creds="$HOME/.claude-pessoal/.credentials.json"
+    [[ ! -f "$creds" ]] && return 1
+    command -v python3 &>/dev/null || return 1
+    local token
+    token=$(python3 -c "
+import json, sys
+with open(sys.argv[1]) as f:
+    d = json.load(f)
+print(d['claudeAiOauth']['accessToken'])
+" "$creds" 2>/dev/null) || return 1
+    curl -sf "https://api.anthropic.com/v1/models" \
+        -H "Authorization: Bearer $token" \
+        -H "anthropic-version: 2023-06-01" | \
+        python3 -c "import json,sys; [print(m['id']) for m in json.load(sys.stdin).get('data',[])]" 2>/dev/null
+}
+
+_select_best_model() {
+    local available="$1" fallback="$2"
+    for m in "${_claude_model_priority[@]}"; do
+        echo "$available" | grep -qxF "$m" && { echo "$m"; return; }
+    done
+    echo "$fallback"
+}
+
+_get_mprj_model() {
+    local cache="$HOME/.claude-mprj/.model-cache.json"
+    if [[ -f "$cache" ]] && command -v python3 &>/dev/null; then
+        local age ts
+        ts=$(python3 -c "
+import json, sys
+from datetime import datetime, timezone
+with open(sys.argv[1]) as f:
+    d = json.load(f)
+dt = datetime.fromisoformat(d['cached_at'].replace('Z','+00:00'))
+print(int(dt.astimezone(timezone.utc).timestamp()))
+" "$cache" 2>/dev/null || echo 0)
+        age=$(( $(date +%s) - ts ))
+        if (( age < 604800 )); then
+            python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['model'])" "$cache" 2>/dev/null && return
+        fi
+    fi
+
+    printf '  \033[1;33m[claude-mprj] Detectando modelo disponivel...\033[0m\n' >&2
+    local best="claude-haiku-4-5-20251001"
+    for m in "${_claude_model_priority[@]}"; do
+        CLAUDE_CONFIG_DIR="$HOME/.claude-mprj" \
+        CLAUDE_CODE_USE_FOUNDRY=1 \
+        ANTHROPIC_FOUNDRY_RESOURCE="gomas-mok8hc25-eastus2" \
+        ANTHROPIC_FOUNDRY_API_KEY="$(cat ~/.secrets/claude-mprj.key 2>/dev/null)" \
+        command claude --model "$m" -p "." --print --output-format json >/dev/null 2>&1 \
+            && best="$m" && break
+    done
+
+    if command -v python3 &>/dev/null; then
+        python3 -c "
+import json, sys
+from datetime import datetime, timezone
+data = {'model': sys.argv[1], 'cached_at': datetime.now(timezone.utc).isoformat()}
+with open(sys.argv[2], 'w') as f:
+    json.dump(data, f)
+" "$best" "$cache" 2>/dev/null
+    fi
+    printf '  \033[0;36m[claude-mprj] modelo: %s (cache 7 dias)\033[0m\n' "$best" >&2
+    echo "$best"
+}
+
+update-mprj-model() {
+    rm -f "$HOME/.claude-mprj/.model-cache.json"
+    CLAUDE_CONFIG_DIR="$HOME/.claude-mprj" \
+    CLAUDE_CODE_USE_FOUNDRY=1 \
+    ANTHROPIC_FOUNDRY_RESOURCE="gomas-mok8hc25-eastus2" \
+    ANTHROPIC_FOUNDRY_API_KEY="$(cat ~/.secrets/claude-mprj.key 2>/dev/null)" \
+    _get_mprj_model > /dev/null
+}
+
+# --- Claude Code: funções por conta ------------------------------------------
+
 function claude-mprj() {
+    local extra_args=() has_model=false
+    for arg in "$@"; do [[ "$arg" == "--model" ]] && has_model=true && break; done
+
+    if ! $has_model; then
+        local model; model=$(_get_mprj_model)
+        [[ -n "$model" ]] && extra_args=("--model" "$model")
+    fi
     CLAUDE_CONFIG_DIR=~/.claude-mprj \
     CLAUDE_CODE_USE_FOUNDRY=1 \
     ANTHROPIC_FOUNDRY_RESOURCE="gomas-mok8hc25-eastus2" \
     ANTHROPIC_FOUNDRY_API_KEY="$(cat ~/.secrets/claude-mprj.key 2>/dev/null)" \
-    command claude "$@"
+    command claude "${extra_args[@]}" "$@"
 }
 
 function claude-pro() {
+    local extra_args=() has_model=false
+    for arg in "$@"; do [[ "$arg" == "--model" ]] && has_model=true && break; done
+
+    if ! $has_model; then
+        if [[ -z "$_CLAUDE_PRO_MODEL" ]]; then
+            local available; available=$(_get_anthropic_models)
+            _CLAUDE_PRO_MODEL=$(_select_best_model "$available" "claude-sonnet-4-6")
+            printf '  \033[0;36m[claude-pro] modelo: %s\033[0m\n' "$_CLAUDE_PRO_MODEL"
+        fi
+        [[ -n "$_CLAUDE_PRO_MODEL" ]] && extra_args=("--model" "$_CLAUDE_PRO_MODEL")
+    fi
     CLAUDE_CONFIG_DIR=~/.claude-pessoal \
-    command claude "$@"
+    command claude "${extra_args[@]}" "$@"
 }
 
 alias claude="echo 'Use: claude-mprj  ou  claude-pro'"
+alias ch='claude-pro --model claude-haiku-4-5-20251001'
+alias cs='claude-pro --model claude-sonnet-4-6'
 SHELLBLOCK
     success "Funções adicionadas em $rc"
 }
@@ -130,22 +233,129 @@ _append_fish() {
     cat > "$conf" <<'FISHBLOCK'
 # --- Claude Code: múltiplas contas ---
 
-function claude-mprj
+# --- Claude Code: Model Routing -----------------------------------------------
+set -g _claude_pro_model ""
+set -g _claude_model_priority "claude-sonnet-4-6" "claude-haiku-4-5-20251001"
+
+function _get_anthropic_models
+    set creds "$HOME/.claude-pessoal/.credentials.json"
+    test -f $creds; or return 1
+    command -q python3; or return 1
+    set token (python3 -c "
+import json, sys
+with open(sys.argv[1]) as f:
+    d = json.load(f)
+print(d['claudeAiOauth']['accessToken'])
+" $creds 2>/dev/null); or return 1
+    curl -sf "https://api.anthropic.com/v1/models" \
+        -H "Authorization: Bearer $token" \
+        -H "anthropic-version: 2023-06-01" | \
+        python3 -c "import json,sys; [print(m['id']) for m in json.load(sys.stdin).get('data',[])]" 2>/dev/null
+end
+
+function _select_best_model
+    set available $argv[1]
+    set fallback $argv[2]
+    for m in $_claude_model_priority
+        echo $available | grep -qxF $m; and echo $m; and return
+    end
+    echo $fallback
+end
+
+function _get_mprj_model
+    set cache "$HOME/.claude-mprj/.model-cache.json"
+    if test -f $cache; and command -q python3
+        set age (python3 -c "
+import json, sys
+from datetime import datetime, timezone
+with open(sys.argv[1]) as f:
+    d = json.load(f)
+dt = datetime.fromisoformat(d['cached_at'].replace('Z','+00:00'))
+print((datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds())
+" $cache 2>/dev/null)
+        if test -n "$age"; and test (math "int($age)") -lt 604800
+            python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['model'])" $cache 2>/dev/null; and return
+        end
+    end
+
+    printf '  \033[1;33m[claude-mprj] Detectando modelo disponivel...\033[0m\n' >&2
+    set best "claude-haiku-4-5-20251001"
+    for m in $_claude_model_priority
+        env CLAUDE_CONFIG_DIR=~/.claude-mprj \
+            CLAUDE_CODE_USE_FOUNDRY=1 \
+            ANTHROPIC_FOUNDRY_RESOURCE="gomas-mok8hc25-eastus2" \
+            ANTHROPIC_FOUNDRY_API_KEY=(cat ~/.secrets/claude-mprj.key 2>/dev/null) \
+            command claude --model $m -p "." --print --output-format json >/dev/null 2>&1
+        and set best $m; and break
+    end
+
+    if command -q python3
+        python3 -c "
+import json, sys
+from datetime import datetime, timezone
+data = {'model': sys.argv[1], 'cached_at': datetime.now(timezone.utc).isoformat()}
+with open(sys.argv[2], 'w') as f:
+    json.dump(data, f)
+" $best $cache 2>/dev/null
+    end
+    printf '  \033[0;36m[claude-mprj] modelo: %s (cache 7 dias)\033[0m\n' $best >&2
+    echo $best
+end
+
+function update-mprj-model
+    rm -f "$HOME/.claude-mprj/.model-cache.json"
     env CLAUDE_CONFIG_DIR=~/.claude-mprj \
         CLAUDE_CODE_USE_FOUNDRY=1 \
         ANTHROPIC_FOUNDRY_RESOURCE="gomas-mok8hc25-eastus2" \
         ANTHROPIC_FOUNDRY_API_KEY=(cat ~/.secrets/claude-mprj.key 2>/dev/null) \
-        command claude $argv
+        _get_mprj_model > /dev/null
+end
+
+# --- Claude Code: funções por conta ------------------------------------------
+
+function claude-mprj
+    set extra_args
+    set has_model false
+    for arg in $argv
+        if test "$arg" = "--model"; set has_model true; break; end
+    end
+
+    if not $has_model
+        set model (_get_mprj_model)
+        test -n "$model"; and set extra_args --model $model
+    end
+    env CLAUDE_CONFIG_DIR=~/.claude-mprj \
+        CLAUDE_CODE_USE_FOUNDRY=1 \
+        ANTHROPIC_FOUNDRY_RESOURCE="gomas-mok8hc25-eastus2" \
+        ANTHROPIC_FOUNDRY_API_KEY=(cat ~/.secrets/claude-mprj.key 2>/dev/null) \
+        command claude $extra_args $argv
 end
 
 function claude-pro
+    set extra_args
+    set has_model false
+    for arg in $argv
+        if test "$arg" = "--model"; set has_model true; break; end
+    end
+
+    if not $has_model
+        if test -z "$_claude_pro_model"
+            set available (_get_anthropic_models)
+            set -g _claude_pro_model (_select_best_model "$available" "claude-sonnet-4-6")
+            printf '  \033[0;36m[claude-pro] modelo: %s\033[0m\n' $_claude_pro_model
+        end
+        test -n "$_claude_pro_model"; and set extra_args --model $_claude_pro_model
+    end
     env CLAUDE_CONFIG_DIR=~/.claude-pessoal \
-        command claude $argv
+        command claude $extra_args $argv
 end
 
 function claude
     echo 'Use: claude-mprj  ou  claude-pro'
 end
+
+abbr --add ch 'claude-pro --model claude-haiku-4-5-20251001'
+abbr --add cs 'claude-pro --model claude-sonnet-4-6'
 FISHBLOCK
     success "Funções configuradas em $conf"
 }
