@@ -276,32 +276,81 @@ load_secrets()
 
 Os MCPs abaixo correspondem à stack definida em `CLAUDE.md`. Instale os de escopo `global` uma vez por máquina; os `local` e `project` por projeto.
 
-| Server       | Escopo    | Uso                                         |
-|--------------|-----------|---------------------------------------------|
-| `gitlab`     | `local`   | MRs, issues, pipelines no MPRJ GitLab       |
-| `filesystem` | `global`  | Acesso estruturado a arquivos               |
-| `memory`     | `global`  | Persistência de contexto cross-session      |
-| `postgres`   | `local`   | Queries diretas no banco de dev             |
-| `playwright` | `project` | Testes E2E (adicionar em cada projeto)      |
+| Server       | Escopo    | Config                       | Uso                                         |
+|--------------|-----------|------------------------------|---------------------------------------------|
+| `filesystem` | `global`  | `settings.json`              | Acesso estruturado a arquivos               |
+| `memory`     | `global`  | `settings.json`              | Persistência de contexto cross-session      |
+| `gitlab`     | `global`  | `settings.json`              | MRs, issues, pipelines no MPRJ GitLab       |
+| `postgres`   | `global`  | `settings.local.json` ⚠️     | Queries diretas no banco de dev             |
+| `playwright` | `project` | `.claude/settings.json`      | Testes E2E (adicionar em cada projeto)      |
+
+> ⚠️ `settings.local.json` **nunca é commitado** — contém credenciais. Já adicionado ao `.gitignore`.
+
+---
+
+### 6.1. MCPs em `settings.json` (via CLI)
+
+Os MCPs sem credenciais ficam em `settings.json` (commitado):
 
 ```bash
-# GitLab MPRJ (escopo local — credenciais por projeto, não commitado)
-claude mcp add --scope local gitlab -- npx -y @modelcontextprotocol/server-gitlab
-
-# Filesystem (escopo global — disponível em toda sessão)
+# Filesystem (global — disponível em toda sessão)
 claude mcp add --scope global filesystem -- npx -y @modelcontextprotocol/server-filesystem \
   "$HOME"
 
-# Memory (escopo global — contexto persiste entre sessões)
+# Memory (global — contexto persiste entre sessões)
 claude mcp add --scope global memory -- npx -y @modelcontextprotocol/server-memory
 
-# PostgreSQL local (escopo local — por projeto)
-claude mcp add --scope local postgres -- npx -y @modelcontextprotocol/server-postgres \
-  "postgresql://user:pass@localhost:5432/dev_db"
+# GitLab MPRJ (global — token via variável de ambiente)
+claude mcp add --scope global gitlab -- npx -y @modelcontextprotocol/server-gitlab
 
-# Playwright (escopo de projeto — executar na raiz do projeto)
+# Playwright (project — executar na raiz do projeto)
 claude mcp add --scope project playwright -- npx @playwright/mcp@latest
 ```
+
+---
+
+### 6.2. PostgreSQL — via `settings.local.json` (credenciais)
+
+O MCP postgres **não usa `claude mcp add`** porque a connection string contém senha.
+Em vez disso, configure manualmente o arquivo `settings.local.json` (não commitado):
+
+**Linux/Mac** — `~/.claude/settings.local.json`  
+**Windows** — `%USERPROFILE%\.claude\settings.local.json`
+
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://USER:PASS@HOST:5432/DATABASE"
+      ]
+    }
+  }
+}
+```
+
+Use `settings.local.json.example` deste repositório como ponto de partida:
+
+```bash
+# Linux/Mac
+cp settings.local.json.example ~/.claude/settings.local.json
+
+# Windows (PowerShell)
+Copy-Item settings.local.json.example "$env:USERPROFILE\.claude\settings.local.json"
+```
+
+Depois edite o arquivo com as credenciais reais.
+
+**Pacote:** `@modelcontextprotocol/server-postgres`  
+**Teste rápido:**
+```bash
+npx -y @modelcontextprotocol/server-postgres "postgresql://user:pass@localhost:5432/db" --help
+```
+
+---
 
 ### Verificar MCPs instalados
 
