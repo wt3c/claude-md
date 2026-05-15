@@ -274,80 +274,69 @@ load_secrets()
 
 ## 6. MCP Servers
 
-Os MCPs abaixo correspondem à stack definida em `CLAUDE.md`. Instale os de escopo `global` uma vez por máquina; os `local` e `project` por projeto.
+Os MCPs abaixo correspondem à stack definida em `CLAUDE.md`.
 
-| Server       | Escopo    | Config                       | Uso                                         |
-|--------------|-----------|------------------------------|---------------------------------------------|
-| `filesystem` | `global`  | `settings.json`              | Acesso estruturado a arquivos               |
-| `memory`     | `global`  | `settings.json`              | Persistência de contexto cross-session      |
-| `gitlab`     | `global`  | `settings.json`              | MRs, issues, pipelines no MPRJ GitLab       |
-| `postgres`   | `global`  | `settings.local.json` ⚠️     | Queries diretas no banco de dev             |
-| `playwright` | `project` | `.claude/settings.json`      | Testes E2E (adicionar em cada projeto)      |
+> **Como o Claude Code armazena MCPs:** `claude mcp add` grava em `.claude.json` (arquivo interno,
+> nunca commitado). O campo `mcpServers` do `settings.json` **não é lido** pelo CLI — ignore-o para
+> este fim. `.claude.json` está no `.gitignore` deste repositório.
 
-> ⚠️ `settings.local.json` **nunca é commitado** — contém credenciais. Já adicionado ao `.gitignore`.
+| Server       | Escopo    | Uso                                         |
+|--------------|-----------|---------------------------------------------|
+| `filesystem` | `user`    | Acesso estruturado a arquivos               |
+| `memory`     | `user`    | Persistência de contexto cross-session      |
+| `gitlab`     | `user`    | MRs, issues, pipelines no MPRJ GitLab       |
+| `postgres`   | `user`    | Queries diretas no banco de dev             |
+| `playwright` | `project` | Testes E2E (adicionar em cada projeto)      |
 
 ---
 
-### 6.1. MCPs em `settings.json` (via CLI)
+### 6.1. Registrar MCPs — comando padrão
 
-Os MCPs sem credenciais ficam em `settings.json` (commitado):
+Todos os MCPs são registrados via `claude mcp add`. Use `--scope user` para disponibilizar
+em todas as sessões da conta, ou `--scope project` para um projeto específico.
 
 ```bash
-# Filesystem (global — disponível em toda sessão)
-claude mcp add --scope global filesystem -- npx -y @modelcontextprotocol/server-filesystem \
-  "$HOME"
+# Filesystem
+claude mcp add --scope user filesystem -- npx -y @modelcontextprotocol/server-filesystem "$HOME"
 
-# Memory (global — contexto persiste entre sessões)
-claude mcp add --scope global memory -- npx -y @modelcontextprotocol/server-memory
+# Memory
+claude mcp add --scope user memory -- npx -y @modelcontextprotocol/server-memory
 
-# GitLab MPRJ (global — token via variável de ambiente)
-claude mcp add --scope global gitlab -- npx -y @modelcontextprotocol/server-gitlab
+# GitLab MPRJ (token via variável de ambiente no shell)
+claude mcp add --scope user gitlab -- npx -y @modelcontextprotocol/server-gitlab
 
-# Playwright (project — executar na raiz do projeto)
+# Playwright (por projeto — executar na raiz do projeto)
 claude mcp add --scope project playwright -- npx @playwright/mcp@latest
 ```
 
 ---
 
-### 6.2. PostgreSQL — via `settings.local.json` (credenciais)
+### 6.2. PostgreSQL (connection string com credenciais)
 
-O MCP postgres **não usa `claude mcp add`** porque a connection string contém senha.
-Em vez disso, configure manualmente o arquivo `settings.local.json` (não commitado):
-
-**Linux/Mac** — `~/.claude/settings.local.json`  
-**Windows** — `%USERPROFILE%\.claude\settings.local.json`
-
-```json
-{
-  "mcpServers": {
-    "postgres": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-postgres",
-        "postgresql://USER:PASS@HOST:5432/DATABASE"
-      ]
-    }
-  }
-}
-```
-
-Use `settings.local.json.example` deste repositório como ponto de partida:
+O postgres usa `--scope user` normalmente — as credenciais ficam em `.claude.json`, que já
+está no `.gitignore` e nunca é commitado.
 
 ```bash
-# Linux/Mac
-cp settings.local.json.example ~/.claude/settings.local.json
-
-# Windows (PowerShell)
-Copy-Item settings.local.json.example "$env:USERPROFILE\.claude\settings.local.json"
+claude mcp add --scope user postgres -- npx -y @modelcontextprotocol/server-postgres \
+  "postgresql://USER:PASS@HOST:5432/DATABASE"
 ```
 
-Depois edite o arquivo com as credenciais reais.
+**Múltiplas contas:** registrar separadamente em cada conta usando `CLAUDE_CONFIG_DIR`:
 
-**Pacote:** `@modelcontextprotocol/server-postgres`  
-**Teste rápido:**
 ```bash
-npx -y @modelcontextprotocol/server-postgres "postgresql://user:pass@localhost:5432/db" --help
+# Conta pessoal
+CLAUDE_CONFIG_DIR=~/.claude-pessoal claude mcp add --scope user postgres -- \
+  npx -y @modelcontextprotocol/server-postgres "postgresql://USER:PASS@HOST:5432/DATABASE"
+
+# Conta MPRJ
+CLAUDE_CONFIG_DIR=~/.claude-mprj claude mcp add --scope user postgres -- \
+  npx -y @modelcontextprotocol/server-postgres "postgresql://USER:PASS@HOST:5432/DATABASE"
+```
+
+**Verificar conexão:**
+```bash
+claude mcp list
+# postgres: npx ... - ✓ Connected
 ```
 
 ---
