@@ -280,13 +280,14 @@ Os MCPs abaixo correspondem à stack definida em `CLAUDE.md`.
 > nunca commitado). O campo `mcpServers` do `settings.json` **não é lido** pelo CLI — ignore-o para
 > este fim. `.claude.json` está no `.gitignore` deste repositório.
 
-| Server       | Escopo    | Uso                                         |
-|--------------|-----------|---------------------------------------------|
-| `filesystem` | `user`    | Acesso estruturado a arquivos               |
-| `memory`     | `user`    | Persistência de contexto cross-session      |
-| `gitlab`     | `user`    | MRs, issues, pipelines no MPRJ GitLab       |
-| `postgres`   | `user`    | Queries diretas no banco de dev             |
-| `playwright` | `project` | Testes E2E (adicionar em cada projeto)      |
+| Server       | Escopo    | Credencial            | Uso                                         |
+|--------------|-----------|----------------------|---------------------------------------------|
+| `filesystem` | `user`    | —                    | Acesso estruturado a arquivos               |
+| `memory`     | `user`    | —                    | Persistência de contexto cross-session      |
+| `gitlab`     | `user`    | `GITLAB_TOKEN` (env) | MRs, issues, pipelines no MPRJ GitLab       |
+| `postgres`   | `user`    | connection string    | Queries diretas no banco de dev             |
+| `postman`    | `user`    | `POSTMAN_API_KEY`    | Collections, environments, APIs Postman     |
+| `playwright` | `project` | —                    | Testes E2E (adicionar em cada projeto)      |
 
 ---
 
@@ -337,6 +338,30 @@ CLAUDE_CONFIG_DIR=~/.claude-mprj claude mcp add --scope user postgres -- \
 ```bash
 claude mcp list
 # postgres: npx ... - ✓ Connected
+```
+
+---
+
+### 6.3. Postman (API key)
+
+```bash
+claude mcp add --scope user postman \
+  -e POSTMAN_API_KEY=SUA_KEY_AQUI \
+  -- npx -y @postman/postman-mcp-server
+```
+
+Gere a API Key em: **postman.com → Account Settings → API Keys → Generate API Key**
+
+**Múltiplas contas:**
+
+```bash
+# Conta pessoal
+CLAUDE_CONFIG_DIR=~/.claude-pessoal claude mcp add --scope user postman \
+  -e POSTMAN_API_KEY=SUA_KEY_AQUI -- npx -y @postman/postman-mcp-server
+
+# Conta MPRJ
+CLAUDE_CONFIG_DIR=~/.claude-mprj claude mcp add --scope user postman \
+  -e POSTMAN_API_KEY=SUA_KEY_AQUI -- npx -y @postman/postman-mcp-server
 ```
 
 ---
