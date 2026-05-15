@@ -3,6 +3,7 @@
 Este guia cobre instalação da configuração global e setup de múltiplas contas (MPRJ/Foundry + pessoal PRO).
 
 **Ambientes:**
+
 - **Windows 11**: `D:\workspace\claude-md`
 - **Linux Arch (Garuda)**: `$HOME/workspace/claude-md`
 
@@ -108,27 +109,27 @@ Acesse: `https://gitlab-dti.mprj.mp.br/-/user_settings/personal_access_tokens`
 
 ### Configurações do token
 
-| Campo       | Valor recomendado                          |
-|-------------|---------------------------------------------|
-| Token name  | `claude-code-mprj`                          |
-| Expiration  | 1 ano (renovar no vencimento)               |
-| Scopes      | ver tabela abaixo                           |
+| Campo      | Valor recomendado             |
+|------------|-------------------------------|
+| Token name | `claude-code-mprj`            |
+| Expiration | 1 ano (renovar no vencimento) |
+| Scopes     | ver tabela abaixo             |
 
 ### Scopes — o máximo que boas práticas permitem
 
-| Scope              | Marcar | Motivo                                                       |
-|--------------------|--------|--------------------------------------------------------------|
-| `api`              | ✅     | Acesso completo à API REST — projetos, MRs, issues, pipelines, registry, perfil |
-| `read_repository`  | ✅     | Clonar repositórios privados via HTTPS (`api` não cobre git over HTTPS) |
-| `write_repository` | ✅     | Push via HTTPS — necessário para o Claude Code fazer push    |
-| `read_registry`    | ✅     | Pull de imagens do Container Registry                        |
-| `write_registry`   | ✅     | Push de imagens ao Container Registry                        |
-| `read_user`        | ❌     | Redundante — já coberto pelo `api`                           |
-| `create_runner`    | ❌     | Desnecessário — não registramos runners via Claude           |
-| `manage_runner`    | ❌     | Desnecessário                                                |
-| `ai_features`      | ❌     | Recursos GitLab AI — não utilizado                           |
-| `k8s_proxy`        | ❌     | Proxy Kubernetes — não utilizado                             |
-| `sudo`             | ❌     | Impersonar outros usuários — nunca conceder                  |
+| Scope              | Marcar | Motivo                                                                          |
+|--------------------|--------|---------------------------------------------------------------------------------|
+| `api`              | ✅      | Acesso completo à API REST — projetos, MRs, issues, pipelines, registry, perfil |
+| `read_repository`  | ✅      | Clonar repositórios privados via HTTPS (`api` não cobre git over HTTPS)         |
+| `write_repository` | ✅      | Push via HTTPS — necessário para o Claude Code fazer push                       |
+| `read_registry`    | ✅      | Pull de imagens do Container Registry                                           |
+| `write_registry`   | ✅      | Push de imagens ao Container Registry                                           |
+| `read_user`        | ❌      | Redundante — já coberto pelo `api`                                              |
+| `create_runner`    | ❌      | Desnecessário — não registramos runners via Claude                              |
+| `manage_runner`    | ❌      | Desnecessário                                                                   |
+| `ai_features`      | ❌      | Recursos GitLab AI — não utilizado                                              |
+| `k8s_proxy`        | ❌      | Proxy Kubernetes — não utilizado                                                |
+| `sudo`             | ❌      | Impersonar outros usuários — nunca conceder                                     |
 
 > **Nota:** o scope `api` já inclui acesso de leitura e escrita à maioria dos recursos.
 > Os scopes `read_repository` e `write_repository` são necessários separadamente para
