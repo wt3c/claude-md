@@ -61,10 +61,11 @@
 
 | Server       | Uso                                    | Escopo  |
 |--------------|----------------------------------------|---------|
-| `gitlab`     | MRs, issues, pipelines no MPRJ GitLab  | global  |
-| `filesystem` | Acesso estruturado a arquivos          | global  |
-| `postgres`   | Queries diretas no banco de dev        | local   |
-| `memory`     | Persistência de contexto cross-session | global  |
+| `gitlab`     | MRs, issues, pipelines no MPRJ GitLab  | user    |
+| `filesystem` | Acesso estruturado a arquivos          | user    |
+| `postgres`   | Queries diretas no banco de dev        | user    |
+| `memory`     | Persistência de contexto cross-session | user    |
+| `postman`    | Collections, environments, APIs        | user    |
 | `playwright` | Testes E2E                             | project |
 
 ---
