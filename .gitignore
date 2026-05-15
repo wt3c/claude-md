@@ -4,3 +4,4 @@
 # Credenciais e config local (nunca commitar)
 .env
 settings.local.json
+.claude.json
