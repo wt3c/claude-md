@@ -68,6 +68,36 @@ Usar `typing.Protocol` para definir interfaces de Repository e Service. Injetar 
 
 ---
 
+# ADR-004: Task Manager — Stack Flutter + FastAPI
+
+**Status**: Aceito
+**Data**: 2026-05-15
+
+## Contexto
+
+Gerenciador de tarefas multiplataforma (Windows, Linux, Android, iOS) com offline-first e sync em tempo real.
+Avaliadas 3 opções de frontend: Flutter, Tauri+Vue, React Native+Expo.
+
+## Decisão
+
+- **Frontend**: Flutter — único com suporte maduro em todas as 4 plataformas com 1 codebase
+- **Backend**: FastAPI + PostgreSQL + Redis — async nativo, menor overhead que Django para API pura
+- **State**: Riverpod — mais tipado e testável que Bloc/GetX/Provider
+- **Local DB**: Drift (SQLite) — offline-first, type-safe, sync queue integrada
+- **Sync**: last-write-wins via `updated_at` + `version` inteiro — simples e suficiente para uso pessoal
+- **Realtime**: WebSocket para push de mudanças entre dispositivos
+- **Auth**: JWT (access 15min) + Refresh Token (30d, rotativo)
+
+## Consequências
+
+- Dart é necessário (curva se não conhecia antes)
+- Tauri descartado: mobile ainda experimental na v2
+- React Native descartado: Electron pesado para desktop
+- FastAPI vs Django: sem admin out-of-the-box (aceitável para API pura)
+- Conflict resolution simples (last-write-wins) pode perder edições simultâneas — aceitável para uso pessoal/pequeno time
+
+---
+
 <!-- Template para novos ADRs:
 
 # ADR-NNN: [título]
