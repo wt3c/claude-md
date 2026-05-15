@@ -121,7 +121,6 @@ $ProfileMarker = "# --- Claude Code: múltiplas contas ---"
 function Set-ProfileFunctions {
     param([string]$ClaudeExe)
 
-    # Garantir que o profile existe
     if (-not (Test-Path $PROFILE)) {
         New-Item -ItemType File -Force -Path $PROFILE | Out-Null
     }
@@ -132,36 +131,128 @@ function Set-ProfileFunctions {
         return
     }
 
-    $block = @"
+    # @'...'@ = raw here-string: nenhum $ expande ao escrever.
+    # CLAUDE_EXE_PATH é o único placeholder substituído pelo caminho real.
+    $block = @'
 
-$ProfileMarker
+# --- Claude Code: múltiplas contas ---
 
-# Caminho detectado automaticamente durante a instalação
-`$claudeExe = "$ClaudeExe"
+# --- Claude Code: Model Routing -----------------------------------------------
+$script:ClaudeSessionCache = @{}
+
+$script:ClaudeModelPriority = @(
+    "claude-sonnet-4-6",
+    "claude-haiku-4-5-20251001"
+)
+
+function Get-AnthropicModels {
+    try {
+        $creds = Get-Content "$env:USERPROFILE\.claude-pessoal\.credentials.json" -Raw |
+            ConvertFrom-Json
+        $token = $creds.claudeAiOauth.accessToken
+        $r = Invoke-RestMethod 'https://api.anthropic.com/v1/models' `
+            -Headers @{ Authorization = "Bearer $token"; 'anthropic-version' = '2023-06-01' }
+        return @($r.data | Select-Object -ExpandProperty id)
+    } catch { return @() }
+}
+
+function Select-BestModel {
+    param([string[]]$Available, [string]$Fallback)
+    foreach ($m in $script:ClaudeModelPriority) {
+        if ($m -in $Available) { return $m }
+    }
+    return $Fallback
+}
+
+function Get-MprjModel {
+    $cacheFile = "$env:USERPROFILE\.claude-mprj\.model-cache.json"
+
+    if (Test-Path $cacheFile) {
+        try {
+            $cache = Get-Content $cacheFile -Raw | ConvertFrom-Json
+            if (((Get-Date) - [datetime]$cache.cached_at).TotalDays -lt 7) {
+                return $cache.model
+            }
+        } catch {}
+    }
+
+    Write-Host '[claude-mprj] Detectando modelo disponivel...' -ForegroundColor Yellow
+    $best = 'claude-haiku-4-5-20251001'
+    foreach ($m in $script:ClaudeModelPriority) {
+        & 'CLAUDE_EXE_PATH' --model $m -p '.' --print --output-format json 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) { $best = $m; break }
+    }
+
+    @{ model = $best; cached_at = (Get-Date -Format 'o') } |
+        ConvertTo-Json | Set-Content $cacheFile
+    Write-Host "[claude-mprj] modelo: $best (cache 7 dias)" -ForegroundColor Cyan
+    return $best
+}
+
+function Update-MprjModel {
+    # Força re-detecção do melhor modelo disponível no Azure Foundry.
+    # Executar após upgrades no Azure.
+    Remove-Item "$env:USERPROFILE\.claude-mprj\.model-cache.json" -ErrorAction SilentlyContinue
+    $env:CLAUDE_CONFIG_DIR          = "$env:USERPROFILE\.claude-mprj"
+    $env:CLAUDE_CODE_USE_FOUNDRY    = '1'
+    $env:ANTHROPIC_FOUNDRY_RESOURCE = 'gomas-mok8hc25-eastus2'
+    try { Get-MprjModel | Out-Null }
+    finally {
+        Remove-Item Env:\CLAUDE_CONFIG_DIR, Env:\CLAUDE_CODE_USE_FOUNDRY,
+            Env:\ANTHROPIC_FOUNDRY_RESOURCE, Env:\ANTHROPIC_FOUNDRY_API_KEY -ErrorAction SilentlyContinue
+    }
+}
+
+# --- Claude Code: funções por conta ------------------------------------------
 
 function claude-mprj {
-    # Autenticação via API Key (Microsoft Foundry)
     # ANTHROPIC_FOUNDRY_API_KEY deve estar nas variáveis de ambiente do usuário
-    `$env:CLAUDE_CONFIG_DIR          = "`$env:USERPROFILE\.claude-mprj"
-    `$env:CLAUDE_CODE_USE_FOUNDRY    = "1"
-    `$env:ANTHROPIC_FOUNDRY_RESOURCE = "gomas-mok8hc25-eastus2"
-    & `$claudeExe @args
-    Remove-Item Env:\CLAUDE_CONFIG_DIR          -ErrorAction SilentlyContinue
-    Remove-Item Env:\CLAUDE_CODE_USE_FOUNDRY    -ErrorAction SilentlyContinue
-    Remove-Item Env:\ANTHROPIC_FOUNDRY_RESOURCE -ErrorAction SilentlyContinue
+    $env:CLAUDE_CONFIG_DIR          = "$env:USERPROFILE\.claude-mprj"
+    $env:CLAUDE_CODE_USE_FOUNDRY    = '1'
+    $env:ANTHROPIC_FOUNDRY_RESOURCE = 'gomas-mok8hc25-eastus2'
+    try {
+        $extraArgs = @()
+        if ('--model' -notin $args) {
+            $model = Get-MprjModel
+            if ($model) { $extraArgs = @('--model', $model) }
+        }
+        & 'CLAUDE_EXE_PATH' @extraArgs @args
+    } finally {
+        Remove-Item Env:\CLAUDE_CONFIG_DIR, Env:\CLAUDE_CODE_USE_FOUNDRY,
+            Env:\ANTHROPIC_FOUNDRY_RESOURCE, Env:\ANTHROPIC_FOUNDRY_API_KEY -ErrorAction SilentlyContinue
+    }
 }
 
 function claude-pro {
-    # Autenticação OAuth normal — use /login na primeira vez
-    `$env:CLAUDE_CONFIG_DIR = "`$env:USERPROFILE\.claude-pessoal"
-    & `$claudeExe @args
-    Remove-Item Env:\CLAUDE_CONFIG_DIR -ErrorAction SilentlyContinue
+    $env:CLAUDE_CONFIG_DIR = "$env:USERPROFILE\.claude-pessoal"
+    try {
+        $extraArgs = @()
+        if ('--model' -notin $args) {
+            if (-not $script:ClaudeSessionCache.ContainsKey('pro')) {
+                $available = Get-AnthropicModels
+                $best = Select-BestModel $available 'claude-sonnet-4-6'
+                $script:ClaudeSessionCache['pro'] = $best
+                Write-Host "[claude-pro] modelo: $best" -ForegroundColor Cyan
+            }
+            $model = $script:ClaudeSessionCache['pro']
+            if ($model) { $extraArgs = @('--model', $model) }
+        }
+        & 'CLAUDE_EXE_PATH' @extraArgs @args
+    } finally {
+        Remove-Item Env:\CLAUDE_CONFIG_DIR -ErrorAction SilentlyContinue
+    }
 }
 
 function claude {
     Write-Host "Use: claude-mprj  ou  claude-pro" -ForegroundColor Yellow
 }
-"@
+
+# aliases rapidos: modelo explicito, sempre claude-pro
+function ch { claude-pro --model claude-haiku-4-5-20251001 @args }
+function cs { claude-pro --model claude-sonnet-4-6 @args }
+'@
+    $escapedExe = $ClaudeExe -replace "'", "''"
+    $block = $block.Replace("'CLAUDE_EXE_PATH'", "'$escapedExe'")
 
     Add-Content -Path $PROFILE -Value $block -Encoding UTF8
     Write-Success "Funções adicionadas em $PROFILE"
