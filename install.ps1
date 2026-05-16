@@ -306,7 +306,7 @@ function Install-MCPs {
         if ($existing -match $mcp.Name) {
             Write-Warn "MCP $($mcp.Name) já instalado — pulando"
         } else {
-            & $ClaudeExe mcp add --scope global $mcp.Name -- @($mcp.Args)
+            & $ClaudeExe mcp add --scope user $mcp.Name -- @($mcp.Args)
             Write-Success "MCP $($mcp.Name) instalado"
         }
     }
