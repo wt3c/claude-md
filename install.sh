@@ -433,7 +433,7 @@ install_mcps() {
     if echo "$existing" | grep -q "filesystem"; then
         warn "MCP filesystem já instalado — pulando"
     else
-        claude mcp add --scope global filesystem -- npx -y \
+        claude mcp add --scope user filesystem -- npx -y \
             @modelcontextprotocol/server-filesystem "$HOME"
         success "MCP filesystem instalado"
     fi
@@ -441,14 +441,14 @@ install_mcps() {
     if echo "$existing" | grep -q "memory"; then
         warn "MCP memory já instalado — pulando"
     else
-        claude mcp add --scope global memory -- npx -y @modelcontextprotocol/server-memory
+        claude mcp add --scope user memory -- npx -y @modelcontextprotocol/server-memory
         success "MCP memory instalado"
     fi
 
     if echo "$existing" | grep -q "gitlab"; then
         warn "MCP gitlab já instalado — pulando"
     else
-        claude mcp add --scope global gitlab -- npx -y @modelcontextprotocol/server-gitlab
+        claude mcp add --scope user gitlab -- npx -y @modelcontextprotocol/server-gitlab
         success "MCP gitlab instalado"
     fi
 
