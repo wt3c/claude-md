@@ -281,11 +281,11 @@ print((datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds()
     printf '  \033[1;33m[claude-mprj] Detectando modelo disponivel...\033[0m\n' >&2
     set best "claude-haiku-4-5-20251001"
     for m in $_claude_model_priority
-        env CLAUDE_CONFIG_DIR=~/.claude-mprj \
-            CLAUDE_CODE_USE_FOUNDRY=1 \
-            ANTHROPIC_FOUNDRY_RESOURCE="gomas-mok8hc25-eastus2" \
-            ANTHROPIC_FOUNDRY_API_KEY=(cat ~/.secrets/claude-mprj.key 2>/dev/null) \
-            command claude --model $m -p "." --print --output-format json >/dev/null 2>&1
+        set -lx CLAUDE_CONFIG_DIR ~/.claude-mprj
+        set -lx CLAUDE_CODE_USE_FOUNDRY 1
+        set -lx ANTHROPIC_FOUNDRY_RESOURCE "gomas-mok8hc25-eastus2"
+        set -lx ANTHROPIC_FOUNDRY_API_KEY (cat ~/.secrets/claude-mprj.key 2>/dev/null)
+        command claude --model $m -p "." --print --output-format json >/dev/null 2>&1
         and set best $m; and break
     end
 
@@ -304,11 +304,7 @@ end
 
 function update-mprj-model
     rm -f "$HOME/.claude-mprj/.model-cache.json"
-    env CLAUDE_CONFIG_DIR=~/.claude-mprj \
-        CLAUDE_CODE_USE_FOUNDRY=1 \
-        ANTHROPIC_FOUNDRY_RESOURCE="gomas-mok8hc25-eastus2" \
-        ANTHROPIC_FOUNDRY_API_KEY=(cat ~/.secrets/claude-mprj.key 2>/dev/null) \
-        _get_mprj_model > /dev/null
+    _get_mprj_model > /dev/null
 end
 
 # --- Claude Code: funções por conta ------------------------------------------
@@ -324,11 +320,11 @@ function claude-mprj
         set model (_get_mprj_model)
         test -n "$model"; and set extra_args --model $model
     end
-    env CLAUDE_CONFIG_DIR=~/.claude-mprj \
-        CLAUDE_CODE_USE_FOUNDRY=1 \
-        ANTHROPIC_FOUNDRY_RESOURCE="gomas-mok8hc25-eastus2" \
-        ANTHROPIC_FOUNDRY_API_KEY=(cat ~/.secrets/claude-mprj.key 2>/dev/null) \
-        command claude $extra_args $argv
+    set -lx CLAUDE_CONFIG_DIR ~/.claude-mprj
+    set -lx CLAUDE_CODE_USE_FOUNDRY 1
+    set -lx ANTHROPIC_FOUNDRY_RESOURCE "gomas-mok8hc25-eastus2"
+    set -lx ANTHROPIC_FOUNDRY_API_KEY (cat ~/.secrets/claude-mprj.key 2>/dev/null)
+    command claude $extra_args $argv
 end
 
 function claude-pro
@@ -346,8 +342,8 @@ function claude-pro
         end
         test -n "$_claude_pro_model"; and set extra_args --model $_claude_pro_model
     end
-    env CLAUDE_CONFIG_DIR=~/.claude-pessoal \
-        command claude $extra_args $argv
+    set -lx CLAUDE_CONFIG_DIR ~/.claude-pessoal
+    command claude $extra_args $argv
 end
 
 function claude
