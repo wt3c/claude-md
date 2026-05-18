@@ -73,6 +73,7 @@ install_to_dir() {
 
     cp "$REPO_DIR/CLAUDE.md"     "$target/CLAUDE.md"
     cp "$REPO_DIR/settings.json" "$target/settings.json"
+    [[ -f "$REPO_DIR/.mcp.json" ]] && cp "$REPO_DIR/.mcp.json" "$target/.mcp.json"
     mkdir -p "$target/skills" "$target/commands"
     cp -r "$REPO_DIR/skills/"*   "$target/skills/"
     cp -r "$REPO_DIR/commands/"* "$target/commands/"
@@ -410,6 +411,32 @@ configure_gitlab() {
     success "GITLAB_TOKEN adicionado em $rc_file"
 }
 
+# ─── API Key Postman ──────────────────────────────────────────────────────────
+configure_postman_key() {
+    sep
+    info "API Key Postman ..."
+    local key; key=$(ask "Cole a API Key do Postman ou Enter para configurar depois")
+    [[ -z "$key" ]] && { warn "POSTMAN_API_KEY não configurado — configure manualmente no shell"; return; }
+
+    local rc_file=""
+    case "${SHELL##*/}" in
+        fish) rc_file="$HOME/.config/fish/conf.d/claude.fish" ;;
+        zsh)  rc_file="$HOME/.zshrc" ;;
+        *)    rc_file="$HOME/.bashrc" ;;
+    esac
+
+    grep -q "POSTMAN_API_KEY" "$rc_file" 2>/dev/null \
+        && { warn "POSTMAN_API_KEY já presente em $rc_file — pulando"; return; }
+
+    if [[ "${SHELL##*/}" == "fish" ]]; then
+        mkdir -p "$(dirname "$rc_file")"
+        printf '\nset -x POSTMAN_API_KEY "%s"\n' "$key" >> "$rc_file"
+    else
+        printf '\nexport POSTMAN_API_KEY="%s"\n' "$key" >> "$rc_file"
+    fi
+    success "POSTMAN_API_KEY adicionado em $rc_file"
+}
+
 # ─── MCP Servers ──────────────────────────────────────────────────────────────
 install_mcps() {
     sep
@@ -438,7 +465,14 @@ install_mcps() {
         success "MCP gitlab instalado"
     fi
 
-    info "MCPs postgres e playwright são por projeto — veja INSTALL.md §6"
+    if echo "$existing" | grep -q "postman"; then
+        warn "MCP postman já instalado — pulando"
+    else
+        claude mcp add --scope user postman -- npx -y @postman/postman-mcp-server
+        success "MCP postman instalado"
+    fi
+
+    info "MCPs postgres e playwright são por projeto — configure via .mcp.json na raiz do projeto"
 }
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
@@ -475,8 +509,9 @@ main() {
         configure_gitlab
     fi
 
-    if ask_yn "Instalar MCP servers globais (filesystem, memory, gitlab)?" "y"; then
+    if ask_yn "Instalar MCP servers globais (filesystem, memory, gitlab, postman)?" "y"; then
         install_mcps
+        configure_postman_key
     fi
 
     # Resumo

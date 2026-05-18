@@ -97,6 +97,9 @@ function Install-ToDir {
 
     Copy-Item "$RepoDir\CLAUDE.md"     "$Target\CLAUDE.md"    -Force
     Copy-Item "$RepoDir\settings.json" "$Target\settings.json" -Force
+    if (Test-Path "$RepoDir\.mcp.json") {
+        Copy-Item "$RepoDir\.mcp.json" "$Target\.mcp.json" -Force
+    }
 
     New-Item -ItemType Directory -Force -Path "$Target\skills"   | Out-Null
     New-Item -ItemType Directory -Force -Path "$Target\commands" | Out-Null
@@ -288,6 +291,21 @@ function Set-GitLabToken {
     }
 }
 
+# ─── API Key Postman ──────────────────────────────────────────────────────────
+function Set-PostmanApiKey {
+    Write-Sep
+    Write-Info "API Key Postman ..."
+    $key = Read-Host "  Cole a API Key do Postman ou Enter para configurar depois"
+    if (-not [string]::IsNullOrWhiteSpace($key)) {
+        [Environment]::SetEnvironmentVariable("POSTMAN_API_KEY", $key, "User")
+        Write-Success "POSTMAN_API_KEY salvo nas variáveis de ambiente do usuário"
+        Write-Info    "Abra um novo terminal para que a variável fique disponível"
+    } else {
+        Write-Warn "Chave não configurada. Configure depois com:"
+        Write-Host "  [Environment]::SetEnvironmentVariable('POSTMAN_API_KEY', 'PMAK-...', 'User')"
+    }
+}
+
 # ─── MCP Servers ──────────────────────────────────────────────────────────────
 function Install-MCPs {
     param([string]$ClaudeExe)
@@ -299,7 +317,8 @@ function Install-MCPs {
     $mcps = @(
         @{ Name = "filesystem"; Args = @("npx", "-y", "@modelcontextprotocol/server-filesystem", $env:USERPROFILE) },
         @{ Name = "memory";     Args = @("npx", "-y", "@modelcontextprotocol/server-memory") },
-        @{ Name = "gitlab";     Args = @("npx", "-y", "@modelcontextprotocol/server-gitlab") }
+        @{ Name = "gitlab";     Args = @("npx", "-y", "@modelcontextprotocol/server-gitlab") },
+        @{ Name = "postman";    Args = @("npx", "-y", "@postman/postman-mcp-server") }
     )
 
     foreach ($mcp in $mcps) {
@@ -311,7 +330,7 @@ function Install-MCPs {
         }
     }
 
-    Write-Info "MCPs postgres e playwright são por projeto — veja INSTALL.md §6"
+    Write-Info "MCPs postgres e playwright são por projeto — configure via .mcp.json na raiz do projeto"
 }
 
 # ─── Atualizar (sem múltiplas contas) ────────────────────────────────────────
@@ -384,8 +403,9 @@ function Main {
         }
     }
 
-    if (Ask-YesNo "Instalar MCP servers globais (filesystem, memory, gitlab)?" "y") {
+    if (Ask-YesNo "Instalar MCP servers globais (filesystem, memory, gitlab, postman)?" "y") {
         Install-MCPs $claudeExe
+        Set-PostmanApiKey
     }
 
     # Resumo
