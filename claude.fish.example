@@ -40,7 +40,7 @@ with open(sys.argv[1]) as f:
 dt = datetime.fromisoformat(d['cached_at'].replace('Z','+00:00'))
 print((datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds())
 " $cache 2>/dev/null)
-        if test -n "$age"; and test (math "int($age)") -lt 604800
+        if test -n "$age"; and test (math --scale=0 $age) -lt 604800
             python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['model'])" $cache 2>/dev/null; and return
         end
     end
