@@ -68,24 +68,14 @@ update_repo() {
 # ─── Instalar arquivos em um diretório ───────────────────────────────────────
 install_to_dir() {
     local target="$1"
-    local use_symlinks="${2:-false}"
 
     mkdir -p "$target/tasks/archive"
 
-    if [[ "$use_symlinks" == "true" ]]; then
-        ln -sf "$REPO_DIR/CLAUDE.md"     "$target/CLAUDE.md"
-        ln -sf "$REPO_DIR/settings.json" "$target/settings.json"
-        # Diretórios: remover entrada anterior antes de criar o symlink
-        rm -rf "${target:?}/skills" "${target:?}/commands"
-        ln -s  "$REPO_DIR/skills"    "$target/skills"
-        ln -s  "$REPO_DIR/commands"  "$target/commands"
-    else
-        cp "$REPO_DIR/CLAUDE.md"     "$target/CLAUDE.md"
-        cp "$REPO_DIR/settings.json" "$target/settings.json"
-        mkdir -p "$target/skills" "$target/commands"
-        cp -r "$REPO_DIR/skills/"*   "$target/skills/"
-        cp -r "$REPO_DIR/commands/"* "$target/commands/"
-    fi
+    cp "$REPO_DIR/CLAUDE.md"     "$target/CLAUDE.md"
+    cp "$REPO_DIR/settings.json" "$target/settings.json"
+    mkdir -p "$target/skills" "$target/commands"
+    cp -r "$REPO_DIR/skills/"*   "$target/skills/"
+    cp -r "$REPO_DIR/commands/"* "$target/commands/"
 
     for f in todo.md lessons.md decisions.md; do
         [[ ! -f "$target/tasks/$f" ]] && cp "$REPO_DIR/tasks/$f" "$target/tasks/$f"
@@ -460,15 +450,6 @@ main() {
     check_prereqs
     update_repo
 
-    # Tipo de instalação
-    sep
-    info "Tipo de instalação:"
-    echo "  1) Symlinks (recomendado) — git pull reflete automaticamente em ~/.claude/"
-    echo "  2) Cópia — independente do repositório (exige re-executar para atualizar)"
-    local install_type; install_type=$(ask "Escolha [1/2]" "1")
-    local use_symlinks="false"
-    [[ "$install_type" == "1" ]] && use_symlinks="true"
-
     # Múltiplas contas?
     sep
     local multi_conta=false
@@ -477,16 +458,16 @@ main() {
     # Instalar diretório principal
     sep
     info "Instalando em ~/.claude ..."
-    install_to_dir "$HOME/.claude" "$use_symlinks"
+    install_to_dir "$HOME/.claude"
     success "~/.claude configurado"
 
     if $multi_conta; then
         info "Instalando em ~/.claude-mprj ..."
-        install_to_dir "$HOME/.claude-mprj" "$use_symlinks"
+        install_to_dir "$HOME/.claude-mprj"
         success "~/.claude-mprj configurado"
 
         info "Instalando em ~/.claude-pessoal ..."
-        install_to_dir "$HOME/.claude-pessoal" "$use_symlinks"
+        install_to_dir "$HOME/.claude-pessoal"
         success "~/.claude-pessoal configurado"
 
         configure_api_key
