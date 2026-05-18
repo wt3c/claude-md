@@ -42,41 +42,7 @@ claude --version
 
 ## 2. Instalação da Configuração Global
 
-### Linux (Garuda / Arch) — via symlinks (recomendado)
-
-Symlinks fazem `git pull` no repositório refletir imediatamente em `~/.claude/` — sem re-executar o script de instalação.
-
-```bash
-cd $HOME/workspace/claude-md
-
-# 1. Criar estrutura de diretórios
-mkdir -p ~/.claude/tasks/archive
-
-# 2. Criar symlinks dos arquivos principais
-ln -sf "$PWD/CLAUDE.md"    ~/.claude/CLAUDE.md
-ln -sf "$PWD/settings.json" ~/.claude/settings.json
-ln -sf "$PWD/skills"        ~/.claude/skills
-ln -sf "$PWD/commands"      ~/.claude/commands
-
-# 3. Copiar templates de tasks (apenas se não existirem)
-[ ! -f ~/.claude/tasks/todo.md ]      && cp tasks/todo.md      ~/.claude/tasks/todo.md
-[ ! -f ~/.claude/tasks/lessons.md ]   && cp tasks/lessons.md   ~/.claude/tasks/lessons.md
-[ ! -f ~/.claude/tasks/decisions.md ] && cp tasks/decisions.md ~/.claude/tasks/decisions.md
-
-# 4. Criar arquivo de auditoria
-touch ~/.claude/audit.log
-
-# 5. Verificar
-ls -la ~/.claude/
-```
-
-> **Nota sobre symlinks em múltiplas contas:** ao usar `~/.claude-mprj` e `~/.claude-pessoal`, repita `ln -sf` apontando para os mesmos arquivos do repo. As tasks ficam independentes por conta.
-
----
-
-### Linux — via cópia (alternativa)
-
-Use se symlinks não forem adequados (ex: permissões restritas, containers).
+### Linux (Garuda / Arch)
 
 ```bash
 cd $HOME/workspace/claude-md
@@ -1034,20 +1000,7 @@ claude-mprj --model claude-sonnet-4-6
 
 ## 8. Atualização
 
-### Linux — com symlinks (nenhuma ação necessária)
-
-Se a instalação usou symlinks (seção 2), basta atualizar o repositório:
-
-```bash
-cd $HOME/workspace/claude-md
-git pull
-```
-
-Os arquivos em `~/.claude/` já apontam para o repositório — nenhuma cópia adicional necessária.
-
----
-
-### Linux — com cópia
+### Linux
 
 ```bash
 cd $HOME/workspace/claude-md
@@ -1146,15 +1099,3 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 . $PROFILE
 ```
 
----
-
-### Symlink quebrado após mover o repositório
-
-```bash
-# Recriar os symlinks com o novo caminho
-cd $HOME/novo-caminho/claude-md
-ln -sf "$PWD/CLAUDE.md"     ~/.claude/CLAUDE.md
-ln -sf "$PWD/settings.json" ~/.claude/settings.json
-ln -sf "$PWD/skills"        ~/.claude/skills
-ln -sf "$PWD/commands"      ~/.claude/commands
-```
