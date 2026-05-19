@@ -35,6 +35,13 @@
 - [PADRÃO] Para usar tecla modificadora física como tecla de símbolo no Hyprland: usar keyd para converter para um keycode neutro não-modificador (ex: `rightcontrol = 102nd` → `<LSGT>`), depois mapear o keycode neutro no XKB (`key <LSGT> { [slash, question, ...] }`)
 - [PADRÃO] ThinkPad T14 Gen 2i ABNT2: solução final documentada em `~/claude-md/INSTALL.md` seção 9
 
+## Instalação / Provisionamento
+
+- [PADRÃO] Instalador que mexe em diretórios com secrets deve sempre: (1) snapshot timestamped antes; (2) preservar destinos sensíveis durante a cópia; (3) restore safety-net no fim. Implementado em `install.sh`/`install.ps1` via `backup_secrets`/`restore_secrets` → `~/.claude-md-backups/<ts>/`
+- [PADRÃO] Arquivos que NUNCA devem ser sobrescritos pelo instalador: `.credentials.json`, `.claude.json`, `.model-cache.json`, `settings.local.json`, `.mcp.json` (pode ter senha de postgres real), `~/.secrets/claude-mprj.key`
+- [ANTIPADRÃO] Pedir secret novo sem detectar se já existe — sempre mostrar `****<last4>` mascarado e perguntar se mantém antes de sobrescrever
+- [PADRÃO] Reter apenas os N backups mais recentes (10) — evita explosão de espaço com chaves antigas em disco
+
 ## Observabilidade
 
 - [PADRÃO] Chamar `configure_telemetry()` no `AppConfig.ready()` — garante instrumentação antes das requisições

@@ -5,6 +5,8 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKUP_ROOT="$HOME/.claude-md-backups"
+BACKUP_DIR=""   # preenchido por backup_secrets()
 
 # ─── Cores e helpers ──────────────────────────────────────────────────────────
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; RED='\033[0;31m'; BOLD='\033[1m'; NC='\033[0m'
@@ -29,6 +31,113 @@ ask_yn() {
     read -rp "  ${1} ${hint}: " _r
     _r="${_r:-$default}"
     [[ "$_r" =~ ^[Yy]$ ]]
+}
+
+# ─── Backup de secrets ───────────────────────────────────────────────────────
+# Lista de arquivos sensíveis a preservar (paths absolutos, expandidos).
+_sensitive_files() {
+    printf '%s\n' \
+        "$HOME/.secrets/claude-mprj.key" \
+        "$HOME/.claude/settings.local.json" \
+        "$HOME/.claude/.mcp.json" \
+        "$HOME/.claude-mprj/.credentials.json" \
+        "$HOME/.claude-mprj/.claude.json" \
+        "$HOME/.claude-mprj/.model-cache.json" \
+        "$HOME/.claude-mprj/settings.local.json" \
+        "$HOME/.claude-mprj/.mcp.json" \
+        "$HOME/.claude-pessoal/.credentials.json" \
+        "$HOME/.claude-pessoal/.claude.json" \
+        "$HOME/.claude-pessoal/.model-cache.json" \
+        "$HOME/.claude-pessoal/settings.local.json" \
+        "$HOME/.claude-pessoal/.mcp.json"
+}
+
+# Copia preservando árvore relativa ao $HOME para um destino.
+_copy_into_backup() {
+    local src="$1" dest_root="$2"
+    [[ ! -e "$src" ]] && return 0
+    local rel="${src#$HOME/}"
+    local dest="$dest_root/$rel"
+    mkdir -p "$(dirname "$dest")"
+    cp -a "$src" "$dest"
+}
+
+# Extrai linhas de env relevantes dos arquivos rc do shell.
+_snapshot_env_vars() {
+    local out="$1"
+    local files=(
+        "$HOME/.bashrc"
+        "$HOME/.zshrc"
+        "$HOME/.config/fish/conf.d/claude.fish"
+    )
+    : > "$out"
+    for f in "${files[@]}"; do
+        [[ ! -f "$f" ]] && continue
+        printf '### %s\n' "$f" >> "$out"
+        grep -E '(GITLAB_TOKEN|GITLAB_URL|POSTMAN_API_KEY|ANTHROPIC_FOUNDRY_API_KEY)' "$f" \
+            >> "$out" 2>/dev/null || true
+        printf '\n' >> "$out"
+    done
+}
+
+backup_secrets() {
+    sep
+    info "Snapshot de chaves e credenciais (BEFORE install)..."
+    local ts; ts=$(date +%Y%m%d-%H%M%S)
+    BACKUP_DIR="$BACKUP_ROOT/$ts"
+    mkdir -p "$BACKUP_DIR"
+    chmod 700 "$BACKUP_DIR"
+
+    local count=0
+    while IFS= read -r f; do
+        if [[ -e "$f" ]]; then
+            _copy_into_backup "$f" "$BACKUP_DIR"
+            count=$((count + 1))
+        fi
+    done < <(_sensitive_files)
+
+    _snapshot_env_vars "$BACKUP_DIR/env.snapshot"
+
+    # Remove backups antigos (mantém últimos 10)
+    if [[ -d "$BACKUP_ROOT" ]]; then
+        local old; old=$(ls -1t "$BACKUP_ROOT" 2>/dev/null | tail -n +11)
+        if [[ -n "$old" ]]; then
+            while IFS= read -r d; do
+                rm -rf "$BACKUP_ROOT/$d"
+            done <<< "$old"
+        fi
+    fi
+
+    success "$count arquivo(s) sensível(is) preservados em $BACKUP_DIR"
+}
+
+# Restaura arquivos sensíveis ausentes a partir do backup mais recente.
+restore_secrets() {
+    [[ -z "$BACKUP_DIR" || ! -d "$BACKUP_DIR" ]] && return 0
+    sep
+    info "Verificação pós-instalação: restaurando chaves se faltarem..."
+
+    local restored=0 kept=0
+    while IFS= read -r f; do
+        local rel="${f#$HOME/}"
+        local from="$BACKUP_DIR/$rel"
+        [[ ! -e "$from" ]] && continue
+        if [[ ! -e "$f" ]]; then
+            mkdir -p "$(dirname "$f")"
+            cp -a "$from" "$f"
+            restored=$((restored + 1))
+            success "Restaurado: $f"
+        else
+            kept=$((kept + 1))
+        fi
+    done < <(_sensitive_files)
+
+    if (( restored == 0 )); then
+        success "Nada para restaurar — $kept arquivo(s) sensível(is) preservados intactos"
+    else
+        success "$restored arquivo(s) restaurado(s) do backup"
+    fi
+    info "Backup completo permanece em: $BACKUP_DIR"
 }
 
 # ─── Pré-requisitos ───────────────────────────────────────────────────────────
@@ -66,14 +175,28 @@ update_repo() {
 }
 
 # ─── Instalar arquivos em um diretório ───────────────────────────────────────
+# Arquivos que NUNCA são sobrescritos se já existirem no destino:
+#   - .credentials.json, .claude.json, .model-cache.json (estado/credenciais)
+#   - settings.local.json (overrides locais com possíveis secrets)
+#   - .mcp.json (pode conter senha de postgres real customizada)
 install_to_dir() {
     local target="$1"
 
     mkdir -p "$target/tasks/archive"
 
+    # Conteúdo do repo: sempre atualizado
     cp "$REPO_DIR/CLAUDE.md"     "$target/CLAUDE.md"
     cp "$REPO_DIR/settings.json" "$target/settings.json"
-    [[ -f "$REPO_DIR/.mcp.json" ]] && cp "$REPO_DIR/.mcp.json" "$target/.mcp.json"
+
+    # .mcp.json: só copia se não existir (preserva customizações com secrets)
+    if [[ -f "$REPO_DIR/.mcp.json" ]]; then
+        if [[ -f "$target/.mcp.json" ]]; then
+            warn "$(basename "$target")/.mcp.json já existe — preservando (pode conter secrets)"
+        else
+            cp "$REPO_DIR/.mcp.json" "$target/.mcp.json"
+        fi
+    fi
+
     mkdir -p "$target/skills" "$target/commands"
     cp -r "$REPO_DIR/skills/"*   "$target/skills/"
     cp -r "$REPO_DIR/commands/"* "$target/commands/"
@@ -373,14 +496,35 @@ configure_shell() {
 configure_api_key() {
     sep
     info "API Key Foundry (MPRJ) ..."
+
+    local key_path="$HOME/.secrets/claude-mprj.key"
+
+    if [[ -s "$key_path" ]]; then
+        local existing; existing=$(<"$key_path")
+        local masked="****${existing: -4}"
+        info "Chave existente detectada: $masked"
+        if ask_yn "Manter chave atual?" "y"; then
+            success "Chave existente preservada ($key_path)"
+            return
+        fi
+    fi
+
     local key; key=$(ask "Cole a API Key (sk-ant-...) ou Enter para configurar depois")
+    # Remove aspas e espaços acidentais coladas pelo usuário
+    key="${key#\"}"; key="${key%\"}"
+    key="${key#\'}"; key="${key%\'}"
+    key="${key#"${key%%[![:space:]]*}"}"
+    key="${key%"${key##*[![:space:]]}"}"
     if [[ -n "$key" ]]; then
         mkdir -p "$HOME/.secrets"
-        echo "$key" > "$HOME/.secrets/claude-mprj.key"
-        chmod 600 "$HOME/.secrets/claude-mprj.key"
-        success "Chave salva em ~/.secrets/claude-mprj.key (chmod 600)"
+        chmod 700 "$HOME/.secrets"
+        printf '%s' "$key" > "$key_path"   # sem newline final
+        chmod 600 "$key_path"
+        success "Chave salva em $key_path (chmod 600)"
+    elif [[ -s "$key_path" ]]; then
+        warn "Entrada vazia — chave antiga MANTIDA em $key_path"
     else
-        warn "Chave não configurada. Salve depois em ~/.secrets/claude-mprj.key"
+        warn "Chave não configurada. Salve depois em $key_path"
     fi
 }
 
@@ -388,9 +532,35 @@ configure_api_key() {
 configure_gitlab() {
     sep
     info "Token GitLab MPRJ ..."
-    local token; token=$(ask "Cole o token (glpat-...) ou Enter para configurar depois")
-    [[ -z "$token" ]] && { warn "Token GitLab não configurado — configure manualmente no shell"; return; }
 
+    # Checa TODOS os rc files conhecidos — $SHELL no subshell pode não refletir
+    # a shell real (login shell vs subshell), então não confiar só nele.
+    local rc_files=(
+        "$HOME/.config/fish/conf.d/claude.fish"
+        "$HOME/.zshrc"
+        "$HOME/.bashrc"
+    )
+
+    local found_in="" existing=""
+    for rc in "${rc_files[@]}"; do
+        if grep -q "GITLAB_TOKEN" "$rc" 2>/dev/null; then
+            found_in="$rc"
+            existing=$(grep -E '(set -x|export) GITLAB_TOKEN' "$rc" 2>/dev/null \
+                | grep -oE '"[^"]+"' | tr -d '"' | head -1)
+            break
+        fi
+    done
+
+    if [[ -n "$found_in" ]]; then
+        local masked="****${existing: -4}"
+        info "GITLAB_TOKEN já presente em $found_in: $masked"
+        if ask_yn "Manter token atual?" "y"; then
+            success "Token existente preservado em $found_in"
+            return
+        fi
+    fi
+
+    # Sem token existente OU usuário escolheu substituir
     local rc_file=""
     case "${SHELL##*/}" in
         fish) rc_file="$HOME/.config/fish/conf.d/claude.fish" ;;
@@ -398,9 +568,8 @@ configure_gitlab() {
         *)    rc_file="$HOME/.bashrc" ;;
     esac
 
-    # Não duplicar
-    grep -q "GITLAB_TOKEN" "$rc_file" 2>/dev/null \
-        && { warn "GITLAB_TOKEN já presente em $rc_file — pulando"; return; }
+    local token; token=$(ask "Cole o token (glpat-...) ou Enter para configurar depois")
+    [[ -z "$token" ]] && { warn "Token GitLab não configurado — configure manualmente no shell"; return; }
 
     if [[ "${SHELL##*/}" == "fish" ]]; then
         mkdir -p "$(dirname "$rc_file")"
@@ -417,8 +586,31 @@ configure_gitlab() {
 configure_postman_key() {
     sep
     info "API Key Postman ..."
-    local key; key=$(ask "Cole a API Key do Postman ou Enter para configurar depois")
-    [[ -z "$key" ]] && { warn "POSTMAN_API_KEY não configurado — configure manualmente no shell"; return; }
+
+    local rc_files=(
+        "$HOME/.config/fish/conf.d/claude.fish"
+        "$HOME/.zshrc"
+        "$HOME/.bashrc"
+    )
+
+    local found_in="" existing=""
+    for rc in "${rc_files[@]}"; do
+        if grep -q "POSTMAN_API_KEY" "$rc" 2>/dev/null; then
+            found_in="$rc"
+            existing=$(grep -E '(set -x|export) POSTMAN_API_KEY' "$rc" 2>/dev/null \
+                | grep -oE '"[^"]+"' | tr -d '"' | head -1)
+            break
+        fi
+    done
+
+    if [[ -n "$found_in" ]]; then
+        local masked="****${existing: -4}"
+        info "POSTMAN_API_KEY já presente em $found_in: $masked"
+        if ask_yn "Manter chave atual?" "y"; then
+            success "Chave existente preservada em $found_in"
+            return
+        fi
+    fi
 
     local rc_file=""
     case "${SHELL##*/}" in
@@ -427,8 +619,8 @@ configure_postman_key() {
         *)    rc_file="$HOME/.bashrc" ;;
     esac
 
-    grep -q "POSTMAN_API_KEY" "$rc_file" 2>/dev/null \
-        && { warn "POSTMAN_API_KEY já presente em $rc_file — pulando"; return; }
+    local key; key=$(ask "Cole a API Key do Postman ou Enter para configurar depois")
+    [[ -z "$key" ]] && { warn "POSTMAN_API_KEY não configurado — configure manualmente no shell"; return; }
 
     if [[ "${SHELL##*/}" == "fish" ]]; then
         mkdir -p "$(dirname "$rc_file")"
@@ -485,6 +677,7 @@ main() {
 
     check_prereqs
     update_repo
+    backup_secrets
 
     # Múltiplas contas?
     sep
@@ -516,6 +709,9 @@ main() {
         configure_postman_key
     fi
 
+    # Safety net: restaura qualquer arquivo sensível ausente do backup
+    restore_secrets
+
     # Resumo
     sep
     printf "${GREEN}${BOLD}✔ Instalação concluída!${NC}\n\n"
@@ -532,6 +728,11 @@ main() {
         echo "  1. Execute: claude"
     fi
     echo ""
+    if [[ -n "$BACKUP_DIR" && -d "$BACKUP_DIR" ]]; then
+        echo "  Backup de chaves/credenciais: $BACKUP_DIR"
+        echo "  (mantidos os 10 backups mais recentes em $BACKUP_ROOT)"
+        echo ""
+    fi
 }
 
 main "$@"
