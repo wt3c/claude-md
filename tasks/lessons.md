@@ -41,6 +41,8 @@
 - [PADRÃO] Arquivos que NUNCA devem ser sobrescritos pelo instalador: `.credentials.json`, `.claude.json`, `.model-cache.json`, `settings.local.json`, `.mcp.json` (pode ter senha de postgres real), `~/.secrets/claude-mprj.key`
 - [ANTIPADRÃO] Pedir secret novo sem detectar se já existe — sempre mostrar `****<last4>` mascarado e perguntar se mantém antes de sobrescrever
 - [PADRÃO] Reter apenas os N backups mais recentes (10) — evita explosão de espaço com chaves antigas em disco
+- [PADRÃO] Blocos de configuração embutidos em rc files (heredocs do `install.sh`) devem ser versionados com marker de versão + marker de fim (`# --- ... (v=N) ---` … `# --- end ... ---`). Re-execuções detectam drift e oferecem migração com backup do rc. Sem isso, fixes do repo ficam presos no commit e nunca chegam aos usuários cujos installs já têm o marker antigo
+- [ANTIPADRÃO] Confiar em `$SHELL` no subshell para descobrir o rc file ativo — `$SHELL` reflete a login shell do usuário, mas em subshells invocados por bash tool ou crons pode estar como `/usr/bin/zsh`/`/bin/bash` divergindo da realidade. Sempre checar os 3 candidatos (`~/.config/fish/conf.d/claude.fish`, `~/.zshrc`, `~/.bashrc`) ao detectar variáveis já configuradas
 
 ## Observabilidade
 

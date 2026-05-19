@@ -209,15 +209,53 @@ install_to_dir() {
 }
 
 # ─── Configurar funções no shell ──────────────────────────────────────────────
-MARKER="# --- Claude Code: múltiplas contas ---"
+# Bump SHELL_BLOCK_VERSION quando alterar o conteúdo dos heredocs SHELLBLOCK/FISHBLOCK.
+# Versões antigas serão detectadas via MARKER_LEGACY_RE e migradas (com backup).
+SHELL_BLOCK_VERSION="2"
+MARKER="# --- Claude Code: múltiplas contas (v=2) ---"
+MARKER_LEGACY_RE="^# --- Claude Code: múltiplas contas"
+MARKER_END="# --- end Claude Code multi-conta ---"
+
+# Remove o bloco shell (start em $MARKER_LEGACY_RE até $MARKER_END ou EOF p/ v1).
+# Faz backup do rc antes de qualquer modificação.
+_remove_shell_block() {
+    local rc="$1"
+    [[ ! -f "$rc" ]] && return
+
+    local start_line; start_line=$(grep -nE "$MARKER_LEGACY_RE" "$rc" 2>/dev/null | head -1 | cut -d: -f1)
+    [[ -z "$start_line" ]] && return
+
+    cp -a "$rc" "$rc.before-update-$(date +%Y%m%d-%H%M%S)"
+
+    local end_line; end_line=$(awk -v s="$start_line" 'NR >= s && /^# --- end Claude Code/ {print NR; exit}' "$rc")
+    [[ -z "$end_line" ]] && end_line=$(wc -l < "$rc")
+
+    sed -i "${start_line},${end_line}d" "$rc"
+    info "Bloco antigo removido de $rc (backup: $rc.before-update-*)"
+}
 
 _append_bash_zsh() {
     local rc="$1"
-    grep -q "$MARKER" "$rc" 2>/dev/null && { warn "Funções já presentes em $rc — pulando"; return; }
+
+    if grep -qF "$MARKER" "$rc" 2>/dev/null; then
+        success "Funções shell v$SHELL_BLOCK_VERSION já presentes em $rc"
+        return
+    fi
+
+    if grep -qE "$MARKER_LEGACY_RE" "$rc" 2>/dev/null; then
+        warn "Versão antiga das funções claude-mprj/claude-pro em $rc"
+        if ask_yn "Substituir pela v$SHELL_BLOCK_VERSION (aplica fixes do repo)?" "y"; then
+            _remove_shell_block "$rc"
+        else
+            warn "Mantendo versão antiga em $rc (fixes não serão aplicados)"
+            return
+        fi
+    fi
+
     # shellcheck disable=SC2016
     cat >> "$rc" <<'SHELLBLOCK'
 
-# --- Claude Code: múltiplas contas ---
+# --- Claude Code: múltiplas contas (v=2) ---
 
 # --- Claude Code: Model Routing -----------------------------------------------
 _CLAUDE_PRO_MODEL=""
@@ -337,16 +375,33 @@ function claude-pro() {
 alias claude="echo 'Use: claude-mprj  ou  claude-pro'"
 alias ch='claude-pro --model claude-haiku-4-5-20251001'
 alias cs='claude-pro --model claude-sonnet-4-6'
+# --- end Claude Code multi-conta ---
 SHELLBLOCK
-    success "Funções adicionadas em $rc"
+    success "Funções shell v$SHELL_BLOCK_VERSION instaladas em $rc"
 }
 
 _append_fish() {
     local conf="$HOME/.config/fish/conf.d/claude.fish"
     mkdir -p "$(dirname "$conf")"
-    grep -q "$MARKER" "$conf" 2>/dev/null && { warn "Funções já presentes em $conf — pulando"; return; }
+
+    if [[ -f "$conf" ]] && grep -qF "$MARKER" "$conf"; then
+        success "Funções fish v$SHELL_BLOCK_VERSION já presentes em $conf"
+        return
+    fi
+
+    if [[ -f "$conf" ]] && grep -qE "$MARKER_LEGACY_RE" "$conf"; then
+        warn "Versão antiga de claude.fish detectada"
+        if ask_yn "Substituir pela v$SHELL_BLOCK_VERSION (aplica fixes do repo)?" "y"; then
+            cp -a "$conf" "$conf.before-update-$(date +%Y%m%d-%H%M%S)"
+            info "Backup salvo: $conf.before-update-*"
+        else
+            warn "Mantendo versão antiga em $conf (fixes não serão aplicados)"
+            return
+        fi
+    fi
+
     cat > "$conf" <<'FISHBLOCK'
-# --- Claude Code: múltiplas contas ---
+# --- Claude Code: múltiplas contas (v=2) ---
 
 # --- Claude Code: Model Routing -----------------------------------------------
 set -g _claude_pro_model ""
@@ -468,8 +523,9 @@ end
 
 abbr --add ch 'claude-pro --model claude-haiku-4-5-20251001'
 abbr --add cs 'claude-pro --model claude-sonnet-4-6'
+# --- end Claude Code multi-conta ---
 FISHBLOCK
-    success "Funções configuradas em $conf"
+    success "Funções fish v$SHELL_BLOCK_VERSION instaladas em $conf"
 }
 
 configure_shell() {

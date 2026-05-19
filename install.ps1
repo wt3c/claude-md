@@ -214,7 +214,36 @@ function Install-ToDir {
 }
 
 # ─── Configurar PowerShell Profile ───────────────────────────────────────────
-$ProfileMarker = "# --- Claude Code: múltiplas contas ---"
+# Bump $ProfileBlockVersion ao alterar o conteúdo do here-string $block.
+# Versões antigas (com marker legacy) são detectadas e migradas com backup.
+$ProfileBlockVersion = "2"
+$ProfileMarker       = "# --- Claude Code: múltiplas contas (v=2) ---"
+$ProfileMarkerLegacy = "# --- Claude Code: múltiplas contas ---"
+$ProfileMarkerEnd    = "# --- end Claude Code multi-conta ---"
+
+function Remove-ProfileBlock {
+    param([string]$ProfilePath)
+    if (-not (Test-Path $ProfilePath)) { return }
+
+    $lines = Get-Content $ProfilePath
+    $startIdx = ($lines | Select-String -Pattern '^# --- Claude Code: múltiplas contas' -SimpleMatch:$false |
+        Select-Object -First 1).LineNumber
+    if (-not $startIdx) { return }
+
+    # Backup antes de modificar
+    $bak = "$ProfilePath.before-update-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    Copy-Item $ProfilePath $bak -Force
+
+    $endIdx = ($lines[($startIdx-1)..($lines.Count-1)] | Select-String -Pattern '^# --- end Claude Code' |
+        Select-Object -First 1).LineNumber
+    if ($endIdx) { $endIdx = $startIdx - 1 + $endIdx } else { $endIdx = $lines.Count }
+
+    $newLines = @()
+    if ($startIdx -gt 1) { $newLines += $lines[0..($startIdx-2)] }
+    if ($endIdx -lt $lines.Count) { $newLines += $lines[$endIdx..($lines.Count-1)] }
+    Set-Content -Path $ProfilePath -Value $newLines -Encoding UTF8
+    Write-Info "Bloco antigo removido de $ProfilePath (backup: $bak)"
+}
 
 function Set-ProfileFunctions {
     param([string]$ClaudeExe)
@@ -224,16 +253,27 @@ function Set-ProfileFunctions {
     }
 
     $content = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
+
     if ($content -and $content.Contains($ProfileMarker)) {
-        Write-Warn "Funções já presentes no `$PROFILE — pulando"
+        Write-Success "Funções PowerShell v$ProfileBlockVersion já presentes no `$PROFILE"
         return
+    }
+
+    if ($content -and $content.Contains($ProfileMarkerLegacy)) {
+        Write-Warn "Versão antiga das funções claude-mprj/claude-pro no `$PROFILE"
+        if (Ask-YesNo "Substituir pela v$ProfileBlockVersion (aplica fixes do repo)?" "y") {
+            Remove-ProfileBlock $PROFILE
+        } else {
+            Write-Warn "Mantendo versão antiga (fixes não serão aplicados)"
+            return
+        }
     }
 
     # @'...'@ = raw here-string: nenhum $ expande ao escrever.
     # CLAUDE_EXE_PATH é o único placeholder substituído pelo caminho real.
     $block = @'
 
-# --- Claude Code: múltiplas contas ---
+# --- Claude Code: múltiplas contas (v=2) ---
 
 # --- Claude Code: Model Routing -----------------------------------------------
 $script:ClaudeSessionCache = @{}
@@ -348,12 +388,13 @@ function claude {
 # aliases rapidos: modelo explicito, sempre claude-pro
 function ch { claude-pro --model claude-haiku-4-5-20251001 @args }
 function cs { claude-pro --model claude-sonnet-4-6 @args }
+# --- end Claude Code multi-conta ---
 '@
     $escapedExe = $ClaudeExe -replace "'", "''"
     $block = $block.Replace("'CLAUDE_EXE_PATH'", "'$escapedExe'")
 
     Add-Content -Path $PROFILE -Value $block -Encoding UTF8
-    Write-Success "Funções adicionadas em $PROFILE"
+    Write-Success "Funções PowerShell v$ProfileBlockVersion instaladas em $PROFILE"
 }
 
 # ─── API Key Foundry ──────────────────────────────────────────────────────────
