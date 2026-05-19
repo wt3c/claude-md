@@ -100,6 +100,7 @@ _append_bash_zsh() {
 _CLAUDE_PRO_MODEL=""
 
 _claude_model_priority=("claude-sonnet-4-6" "claude-haiku-4-5-20251001")
+_claude_mprj_model_priority=("claude-sonnet-4-5")
 
 _get_anthropic_models() {
     local creds="$HOME/.claude-pessoal/.credentials.json"
@@ -145,8 +146,8 @@ print(int(dt.astimezone(timezone.utc).timestamp()))
     fi
 
     printf '  \033[1;33m[claude-mprj] Detectando modelo disponivel...\033[0m\n' >&2
-    local best="claude-haiku-4-5-20251001"
-    for m in "${_claude_model_priority[@]}"; do
+    local best="claude-sonnet-4-5"
+    for m in "${_claude_mprj_model_priority[@]}"; do
         CLAUDE_CONFIG_DIR="$HOME/.claude-mprj" \
         CLAUDE_CODE_USE_FOUNDRY=1 \
         ANTHROPIC_FOUNDRY_RESOURCE="gomas-mok8hc25-eastus2" \
@@ -227,6 +228,7 @@ _append_fish() {
 # --- Claude Code: Model Routing -----------------------------------------------
 set -g _claude_pro_model ""
 set -g _claude_model_priority "claude-sonnet-4-6" "claude-haiku-4-5-20251001"
+set -g _claude_mprj_model_priority "claude-sonnet-4-5"
 
 function _get_anthropic_models
     set creds "$HOME/.claude-pessoal/.credentials.json"
@@ -264,14 +266,14 @@ with open(sys.argv[1]) as f:
 dt = datetime.fromisoformat(d['cached_at'].replace('Z','+00:00'))
 print((datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds())
 " $cache 2>/dev/null)
-        if test -n "$age"; and test (math "int($age)") -lt 604800
+        if test -n "$age"; and test (math --scale=0 $age) -lt 604800
             python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['model'])" $cache 2>/dev/null; and return
         end
     end
 
     printf '  \033[1;33m[claude-mprj] Detectando modelo disponivel...\033[0m\n' >&2
-    set best "claude-haiku-4-5-20251001"
-    for m in $_claude_model_priority
+    set best "claude-sonnet-4-5"
+    for m in $_claude_mprj_model_priority
         set -lx CLAUDE_CONFIG_DIR ~/.claude-mprj
         set -lx CLAUDE_CODE_USE_FOUNDRY 1
         set -lx ANTHROPIC_FOUNDRY_RESOURCE "gomas-mok8hc25-eastus2"
