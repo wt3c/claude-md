@@ -186,6 +186,7 @@ function Install-ToDir {
 
     Copy-Item "$RepoDir\CLAUDE.md"     "$Target\CLAUDE.md"    -Force
     Copy-Item "$RepoDir\settings.json" "$Target\settings.json" -Force
+    Copy-Item "$RepoDir\WORKFLOW_CONFIG.md" "$Target\WORKFLOW_CONFIG.md" -Force
 
     # .mcp.json: preserva se já existir (pode conter senha postgres real)
     if (Test-Path "$RepoDir\.mcp.json") {
@@ -608,6 +609,10 @@ function Main {
         Write-Host "  Próximos passos:"
         Write-Host "  1. Execute: claude"
     }
+    Write-Host ""
+    Write-Host "  ⚠ Workflow de Mudanças em Configurações:" -ForegroundColor Yellow
+    Write-Host "  Sempre testar mudanças em ~/.claude/ antes de propagar para os ambientes."
+    Write-Host "  Veja: WORKFLOW_CONFIG.md ou ~/.claude/WORKFLOW_CONFIG.md"
     Write-Host ""
     if ($script:BackupDir -and (Test-Path $script:BackupDir)) {
         Write-Host "  Backup de chaves/credenciais: $script:BackupDir"
