@@ -1003,6 +1003,8 @@ claude-mprj --model claude-sonnet-4-6
 
 > **Backup automático de chaves:** `install.sh` e `install.ps1` agora fazem snapshot timestamped em `~/.claude-md-backups/<ts>/` antes de qualquer operação (chave Foundry, OAuth Pro, `settings.local.json`, `.mcp.json`, `.claude.json`, `.model-cache.json` por conta + dump de `GITLAB_TOKEN` / `POSTMAN_API_KEY`). O instalador preserva todos esses arquivos durante a cópia e ao final restaura qualquer um que tenha sumido. São mantidos os 10 backups mais recentes; os antigos são apagados. Para forçar restore manual: `cp -a ~/.claude-md-backups/<ts>/.secrets/ ~/`.
 
+> **Migração v1→v2 dos blocos de shell:** os heredocs `claude.fish`/`.bashrc`/`.zshrc`/PowerShell `$PROFILE` agora são versionados (`# --- Claude Code: múltiplas contas (v=2) ---` … `# --- end Claude Code multi-conta ---`). Re-execuções do instalador detectam blocos antigos sem versão e perguntam se devem ser substituídos pelo conteúdo atual do repo (que tem fixes como `math --scale=0` e `_claude_mprj_model_priority` separado). O arquivo rc original é copiado para `<rc>.before-update-<ts>` antes da troca. Para forçar a versão atual sem prompt, remova o bloco manualmente e rode `install.sh` de novo.
+
 ### Linux
 
 ```bash
