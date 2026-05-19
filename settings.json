@@ -1,5 +1,7 @@
 {
   "model": "claude-sonnet-4-6",
+  "advisorModel": "opus",
+  "subagentModel": "haiku",
   "permissions": {
     "allow": [
       "Bash(git status)",
