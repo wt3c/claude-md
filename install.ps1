@@ -8,7 +8,9 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$RepoDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoDir    = Split-Path -Parent $MyInvocation.MyCommand.Path
+$BackupRoot = "$env:USERPROFILE\.claude-md-backups"
+$script:BackupDir = $null   # preenchido por Backup-Secrets
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 function Write-Info    { param($msg) Write-Host "  `u{25B6}  $msg" -ForegroundColor Cyan }
@@ -35,6 +37,93 @@ function Ask-YesNo {
     $val  = Read-Host "  $Prompt $hint"
     if ([string]::IsNullOrWhiteSpace($val)) { $val = $Default }
     return ($val -match '^[Yy]$')
+}
+
+# ─── Backup de secrets ───────────────────────────────────────────────────────
+function Get-SensitiveFiles {
+    @(
+        "$env:USERPROFILE\.claude\settings.local.json",
+        "$env:USERPROFILE\.claude\.mcp.json",
+        "$env:USERPROFILE\.claude-mprj\.credentials.json",
+        "$env:USERPROFILE\.claude-mprj\.claude.json",
+        "$env:USERPROFILE\.claude-mprj\.model-cache.json",
+        "$env:USERPROFILE\.claude-mprj\settings.local.json",
+        "$env:USERPROFILE\.claude-mprj\.mcp.json",
+        "$env:USERPROFILE\.claude-pessoal\.credentials.json",
+        "$env:USERPROFILE\.claude-pessoal\.claude.json",
+        "$env:USERPROFILE\.claude-pessoal\.model-cache.json",
+        "$env:USERPROFILE\.claude-pessoal\settings.local.json",
+        "$env:USERPROFILE\.claude-pessoal\.mcp.json"
+    )
+}
+
+function Backup-EnvVars {
+    param([string]$OutFile)
+    $names = @('ANTHROPIC_FOUNDRY_API_KEY', 'GITLAB_TOKEN', 'GITLAB_URL', 'POSTMAN_API_KEY')
+    $lines = foreach ($n in $names) {
+        $val = [Environment]::GetEnvironmentVariable($n, 'User')
+        if ($val) { "$n=$val" }
+    }
+    if ($lines) { $lines | Set-Content -Path $OutFile -Encoding UTF8 }
+}
+
+function Backup-Secrets {
+    Write-Sep
+    Write-Info "Snapshot de chaves e credenciais (BEFORE install)..."
+    $ts = Get-Date -Format 'yyyyMMdd-HHmmss'
+    $script:BackupDir = Join-Path $BackupRoot $ts
+    New-Item -ItemType Directory -Force -Path $script:BackupDir | Out-Null
+
+    $count = 0
+    foreach ($f in Get-SensitiveFiles) {
+        if (Test-Path $f) {
+            $rel = $f.Substring($env:USERPROFILE.Length).TrimStart('\')
+            $dest = Join-Path $script:BackupDir $rel
+            New-Item -ItemType Directory -Force -Path (Split-Path $dest -Parent) | Out-Null
+            Copy-Item -Path $f -Destination $dest -Force
+            $count++
+        }
+    }
+
+    Backup-EnvVars (Join-Path $script:BackupDir 'env.snapshot')
+
+    # Mantém os 10 backups mais recentes
+    if (Test-Path $BackupRoot) {
+        Get-ChildItem -Path $BackupRoot -Directory |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -Skip 10 |
+            ForEach-Object { Remove-Item $_.FullName -Recurse -Force }
+    }
+
+    Write-Success "$count arquivo(s) sensível(is) preservados em $script:BackupDir"
+}
+
+function Restore-Secrets {
+    if (-not $script:BackupDir -or -not (Test-Path $script:BackupDir)) { return }
+    Write-Sep
+    Write-Info "Verificação pós-instalação: restaurando chaves se faltarem..."
+
+    $restored = 0; $kept = 0
+    foreach ($f in Get-SensitiveFiles) {
+        $rel = $f.Substring($env:USERPROFILE.Length).TrimStart('\')
+        $from = Join-Path $script:BackupDir $rel
+        if (-not (Test-Path $from)) { continue }
+        if (-not (Test-Path $f)) {
+            New-Item -ItemType Directory -Force -Path (Split-Path $f -Parent) | Out-Null
+            Copy-Item -Path $from -Destination $f -Force
+            $restored++
+            Write-Success "Restaurado: $f"
+        } else {
+            $kept++
+        }
+    }
+
+    if ($restored -eq 0) {
+        Write-Success "Nada para restaurar — $kept arquivo(s) sensível(is) preservados intactos"
+    } else {
+        Write-Success "$restored arquivo(s) restaurado(s) do backup"
+    }
+    Write-Info "Backup completo permanece em: $script:BackupDir"
 }
 
 # ─── Pré-requisitos ───────────────────────────────────────────────────────────
@@ -97,8 +186,14 @@ function Install-ToDir {
 
     Copy-Item "$RepoDir\CLAUDE.md"     "$Target\CLAUDE.md"    -Force
     Copy-Item "$RepoDir\settings.json" "$Target\settings.json" -Force
+
+    # .mcp.json: preserva se já existir (pode conter senha postgres real)
     if (Test-Path "$RepoDir\.mcp.json") {
-        Copy-Item "$RepoDir\.mcp.json" "$Target\.mcp.json" -Force
+        if (Test-Path "$Target\.mcp.json") {
+            Write-Warn "$(Split-Path $Target -Leaf)\.mcp.json já existe — preservando (pode conter secrets)"
+        } else {
+            Copy-Item "$RepoDir\.mcp.json" "$Target\.mcp.json"
+        }
     }
 
     New-Item -ItemType Directory -Force -Path "$Target\skills"   | Out-Null
@@ -265,11 +360,24 @@ function cs { claude-pro --model claude-sonnet-4-6 @args }
 function Set-FoundryApiKey {
     Write-Sep
     Write-Info "API Key Foundry (MPRJ) ..."
+
+    $existing = [Environment]::GetEnvironmentVariable("ANTHROPIC_FOUNDRY_API_KEY", "User")
+    if (-not [string]::IsNullOrWhiteSpace($existing)) {
+        $masked = "****" + $existing.Substring([Math]::Max(0, $existing.Length - 4))
+        Write-Info "Chave existente detectada: $masked"
+        if (Ask-YesNo "Manter chave atual?" "y") {
+            Write-Success "Chave existente preservada (User env)"
+            return
+        }
+    }
+
     $key = Read-Host "  Cole a API Key (sk-ant-...) ou Enter para configurar depois"
     if (-not [string]::IsNullOrWhiteSpace($key)) {
         [Environment]::SetEnvironmentVariable("ANTHROPIC_FOUNDRY_API_KEY", $key, "User")
         Write-Success "ANTHROPIC_FOUNDRY_API_KEY salvo nas variáveis de ambiente do usuário"
         Write-Info    "Abra um novo terminal para que a variável fique disponível"
+    } elseif (-not [string]::IsNullOrWhiteSpace($existing)) {
+        Write-Warn "Entrada vazia — chave antiga MANTIDA"
     } else {
         Write-Warn "Chave não configurada. Configure depois com:"
         Write-Host "  [Environment]::SetEnvironmentVariable('ANTHROPIC_FOUNDRY_API_KEY', 'sk-ant-...', 'User')"
@@ -280,12 +388,25 @@ function Set-FoundryApiKey {
 function Set-GitLabToken {
     Write-Sep
     Write-Info "Token GitLab MPRJ ..."
+
+    $existing = [Environment]::GetEnvironmentVariable("GITLAB_TOKEN", "User")
+    if (-not [string]::IsNullOrWhiteSpace($existing)) {
+        $masked = "****" + $existing.Substring([Math]::Max(0, $existing.Length - 4))
+        Write-Info "Token existente detectado: $masked"
+        if (Ask-YesNo "Manter token atual?" "y") {
+            Write-Success "Token existente preservado (User env)"
+            return
+        }
+    }
+
     $token = Read-Host "  Cole o token (glpat-...) ou Enter para configurar depois"
     if (-not [string]::IsNullOrWhiteSpace($token)) {
         [Environment]::SetEnvironmentVariable("GITLAB_TOKEN", $token, "User")
         [Environment]::SetEnvironmentVariable("GITLAB_URL", "https://gitlab-dti.mprj.mp.br", "User")
         Write-Success "GITLAB_TOKEN e GITLAB_URL salvos nas variáveis de ambiente do usuário"
         Write-Info    "Abra um novo terminal para que as variáveis fiquem disponíveis"
+    } elseif (-not [string]::IsNullOrWhiteSpace($existing)) {
+        Write-Warn "Entrada vazia — token antigo MANTIDO"
     } else {
         Write-Warn "Token não configurado. Configure depois em Variáveis de Ambiente do Usuário"
     }
@@ -295,11 +416,24 @@ function Set-GitLabToken {
 function Set-PostmanApiKey {
     Write-Sep
     Write-Info "API Key Postman ..."
+
+    $existing = [Environment]::GetEnvironmentVariable("POSTMAN_API_KEY", "User")
+    if (-not [string]::IsNullOrWhiteSpace($existing)) {
+        $masked = "****" + $existing.Substring([Math]::Max(0, $existing.Length - 4))
+        Write-Info "Chave existente detectada: $masked"
+        if (Ask-YesNo "Manter chave atual?" "y") {
+            Write-Success "Chave existente preservada (User env)"
+            return
+        }
+    }
+
     $key = Read-Host "  Cole a API Key do Postman ou Enter para configurar depois"
     if (-not [string]::IsNullOrWhiteSpace($key)) {
         [Environment]::SetEnvironmentVariable("POSTMAN_API_KEY", $key, "User")
         Write-Success "POSTMAN_API_KEY salvo nas variáveis de ambiente do usuário"
         Write-Info    "Abra um novo terminal para que a variável fique disponível"
+    } elseif (-not [string]::IsNullOrWhiteSpace($existing)) {
+        Write-Warn "Entrada vazia — chave antiga MANTIDA"
     } else {
         Write-Warn "Chave não configurada. Configure depois com:"
         Write-Host "  [Environment]::SetEnvironmentVariable('POSTMAN_API_KEY', 'PMAK-...', 'User')"
@@ -346,7 +480,8 @@ function Update-AllDirs {
         Copy-Item "$RepoDir\settings.json" "$dir\settings.json" -Force
         Copy-Item "$RepoDir\skills\*"   "$dir\skills\"   -Recurse -Force
         Copy-Item "$RepoDir\commands\*" "$dir\commands\" -Recurse -Force
-        Write-Success "Atualizado: $dir"
+        # .mcp.json / settings.local.json / .credentials.json / .claude.json não são tocados
+        Write-Success "Atualizado: $dir (secrets preservados)"
     }
 }
 
@@ -359,6 +494,7 @@ function Main {
 
     $claudeExe = Get-ClaudeExe
     Update-Repo
+    Backup-Secrets
 
     # Modo: fresh install ou update?
     Write-Sep
@@ -369,8 +505,12 @@ function Main {
 
     if ($mode -eq "2") {
         Update-AllDirs
+        Restore-Secrets
         Write-Host ""
         Write-Host "  ✔ Atualização concluída!" -ForegroundColor Green
+        if ($script:BackupDir) {
+            Write-Host "  Backup de chaves: $script:BackupDir"
+        }
         Write-Host ""
         return
     }
@@ -408,6 +548,9 @@ function Main {
         Set-PostmanApiKey
     }
 
+    # Safety net: restaura qualquer arquivo sensível ausente
+    Restore-Secrets
+
     # Resumo
     Write-Sep
     Write-Host "  ✔ Instalação concluída!" -ForegroundColor Green
@@ -425,6 +568,11 @@ function Main {
         Write-Host "  1. Execute: claude"
     }
     Write-Host ""
+    if ($script:BackupDir -and (Test-Path $script:BackupDir)) {
+        Write-Host "  Backup de chaves/credenciais: $script:BackupDir"
+        Write-Host "  (mantidos os 10 backups mais recentes em $BackupRoot)"
+        Write-Host ""
+    }
 }
 
 Main

@@ -1001,19 +1001,25 @@ claude-mprj --model claude-sonnet-4-6
 
 ## 8. Atualização
 
+> **Backup automático de chaves:** `install.sh` e `install.ps1` agora fazem snapshot timestamped em `~/.claude-md-backups/<ts>/` antes de qualquer operação (chave Foundry, OAuth Pro, `settings.local.json`, `.mcp.json`, `.claude.json`, `.model-cache.json` por conta + dump de `GITLAB_TOKEN` / `POSTMAN_API_KEY`). O instalador preserva todos esses arquivos durante a cópia e ao final restaura qualquer um que tenha sumido. São mantidos os 10 backups mais recentes; os antigos são apagados. Para forçar restore manual: `cp -a ~/.claude-md-backups/<ts>/.secrets/ ~/`.
+
 ### Linux
 
 ```bash
 cd $HOME/workspace/claude-md
 git pull
 
-# Atualizar todos os diretórios de contas existentes
+# Rodar o instalador é a forma recomendada — ele faz backup/preserve/restore
+bash install.sh
+
+# Atualização manual mínima (sem backup de chaves):
 for dir in ~/.claude ~/.claude-mprj ~/.claude-pessoal; do
     [ -d "$dir" ] || continue
     cp CLAUDE.md "$dir/CLAUDE.md"
     cp settings.json "$dir/settings.json"
     cp -r skills/*   "$dir/skills/"
     cp -r commands/* "$dir/commands/"
+    # NÃO copiar .mcp.json, settings.local.json, .credentials.json, .claude.json
     echo "Atualizado: $dir"
 done
 ```
@@ -1026,6 +1032,10 @@ done
 cd D:\workspace\claude-md
 git pull
 
+# Recomendado: rodar o instalador (snapshot + preserve + restore automático)
+.\install.ps1   # escolher modo 2 = atualizar
+
+# Atualização manual mínima (sem backup de chaves):
 foreach ($suffix in @("", "-mprj", "-pessoal")) {
     $dir = "$env:USERPROFILE\.claude$suffix"
     if (Test-Path $dir) {
@@ -1033,6 +1043,7 @@ foreach ($suffix in @("", "-mprj", "-pessoal")) {
         Copy-Item settings.json "$dir\settings.json"
         Copy-Item -Recurse -Force skills\*   "$dir\skills\"
         Copy-Item -Recurse -Force commands\* "$dir\commands\"
+        # NÃO copiar .mcp.json, settings.local.json, .credentials.json, .claude.json
         Write-Host "Atualizado: $dir"
     }
 }
