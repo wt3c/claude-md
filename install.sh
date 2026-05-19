@@ -187,6 +187,7 @@ install_to_dir() {
     # Conteúdo do repo: sempre atualizado
     cp "$REPO_DIR/CLAUDE.md"     "$target/CLAUDE.md"
     cp "$REPO_DIR/settings.json" "$target/settings.json"
+    cp "$REPO_DIR/WORKFLOW_CONFIG.md" "$target/WORKFLOW_CONFIG.md"
 
     # .mcp.json: só copia se não existir (preserva customizações com secrets)
     if [[ -f "$REPO_DIR/.mcp.json" ]]; then
@@ -783,6 +784,10 @@ main() {
         echo "  Próximos passos:"
         echo "  1. Execute: claude"
     fi
+    echo ""
+    echo "  ${BOLD}${YELLOW}⚠ Workflow de Mudanças em Configurações:${NC}"
+    echo "  Sempre testar mudanças em ~/.claude/ antes de propagar para os ambientes."
+    echo "  Veja: WORKFLOW_CONFIG.md ou ~/.claude/WORKFLOW_CONFIG.md"
     echo ""
     if [[ -n "$BACKUP_DIR" && -d "$BACKUP_DIR" ]]; then
         echo "  Backup de chaves/credenciais: $BACKUP_DIR"

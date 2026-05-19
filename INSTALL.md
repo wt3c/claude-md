@@ -19,8 +19,9 @@ Este guia cobre instalação da configuração global e setup de múltiplas cont
 6. [MCP Servers](#6-mcp-servers)
 7. [Múltiplas Contas (MPRJ + Pessoal)](#7-múltiplas-contas-mprj--pessoal)
 8. [Atualização](#8-atualização)
-9. [Teclado ThinkPad T14 Gen 2i — ABNT2](#9-teclado-thinkpad-t14-gen-2i--abnt2-garuda-linux--hyprland)
-10. [Troubleshooting](#10-troubleshooting)
+9. [Workflow de Mudanças em Configurações](#9-workflow-de-mudanças-em-configurações)
+10. [Teclado ThinkPad T14 Gen 2i — ABNT2](#10-teclado-thinkpad-t14-gen-2i--abnt2-garuda-linux--hyprland)
+11. [Troubleshooting](#11-troubleshooting)
 
 ---
 
@@ -1053,7 +1054,65 @@ foreach ($suffix in @("", "-mprj", "-pessoal")) {
 
 ---
 
-## 9. Teclado ThinkPad T14 Gen 2i — ABNT2 (Garuda Linux / Hyprland)
+## 9. Workflow de Mudanças em Configurações
+
+**IMPORTANTE:** Sempre que modificar configurações globais do Claude Code, siga este pipeline:
+
+```
+1. Testar em ~/.claude/        # ambiente de teste/staging
+   ↓ (validar funcionamento)
+2. Copiar para ambientes específicos
+   ├── ~/.claude-mprj/         # MPRJ - Azure Foundry
+   └── ~/.claude-pessoal/      # Pessoal - anthropic.com
+   ↓ (adaptar para SO quando necessário)
+3. Versionar em ~/workspace/claude-md/
+   ↓
+4. Commit e push
+```
+
+### Arquivos afetados por este workflow
+
+- `settings.json` — modelo, permissões, hooks, MCP servers
+- `CLAUDE.md` — instruções globais e de projeto
+- `keybindings.json` — atalhos de teclado
+- `hooks/` — scripts de automação
+- Qualquer configuração que afete o comportamento do Claude Code
+
+### Exemplo prático
+
+```bash
+# 1. Testar mudança em ambiente staging
+vim ~/.claude/settings.json
+claude-pro --model opus "teste rápido"  # valida que funciona
+
+# 2. Propagar para ambientes específicos
+cp ~/.claude/settings.json ~/.claude-mprj/
+cp ~/.claude/settings.json ~/.claude-pessoal/
+
+# 3. Versionar no repositório
+cp ~/.claude/settings.json ~/workspace/claude-md/settings.json
+cd ~/workspace/claude-md
+
+# 4. Commitar
+git add settings.json
+git commit -m "config: adicionar subagentModel haiku"
+git push
+```
+
+### Por quê seguir este workflow?
+
+- **Segurança**: `~/.claude/` funciona como staging, evita quebrar ambientes produtivos
+- **Rastreabilidade**: Git mantém histórico completo de mudanças
+- **Consistência**: Garante que todos os ambientes têm configurações validadas
+- **Recuperação**: Se algo quebrar, basta reverter o commit
+
+### Detalhes completos
+
+Veja `WORKFLOW_CONFIG.md` na raiz do repositório ou em qualquer diretório `~/.claude*` após a instalação.
+
+---
+
+## 10. Teclado ThinkPad T14 Gen 2i — ABNT2 (Garuda Linux / Hyprland)
 
 Não existe layout XKB oficial para este teclado. Solução testada com Hyprland 0.55.2 + keyd.
 
@@ -1132,7 +1191,7 @@ sudo systemctl restart keyd                              # mudança no keyd
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 ### `claude: command not found`
 
