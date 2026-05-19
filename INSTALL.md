@@ -19,7 +19,8 @@ Este guia cobre instalação da configuração global e setup de múltiplas cont
 6. [MCP Servers](#6-mcp-servers)
 7. [Múltiplas Contas (MPRJ + Pessoal)](#7-múltiplas-contas-mprj--pessoal)
 8. [Atualização](#8-atualização)
-9. [Troubleshooting](#9-troubleshooting)
+9. [Teclado ThinkPad T14 Gen 2i — ABNT2](#9-teclado-thinkpad-t14-gen-2i--abnt2-garuda-linux--hyprland)
+10. [Troubleshooting](#10-troubleshooting)
 
 ---
 
@@ -1039,7 +1040,86 @@ foreach ($suffix in @("", "-mprj", "-pessoal")) {
 
 ---
 
-## 9. Troubleshooting
+## 9. Teclado ThinkPad T14 Gen 2i — ABNT2 (Garuda Linux / Hyprland)
+
+Não existe layout XKB oficial para este teclado. Solução testada com Hyprland 0.55.2 + keyd.
+
+### Layout físico real
+
+| Tecla física | Keycode | Símbolo |
+|---|---|---|
+| à direita do L | `<AC10>` | `ç` / `Ç` — br(abnt2) nativo, sem override |
+| à direita do `.` | `<AB10>` | `;` / `:` — br(abnt2) nativo, sem override |
+| Right Control | KEY_RIGHTCTRL → keyd → `<LSGT>` | `/` / `?` |
+
+> **Por que keyd?** Hyprland intercepta `KEY_RIGHTCTRL` como modificador antes do XKB.
+> `modifier_map None` no XKB não resolve — o compositor age antes. keyd converte para
+> `KEY_102ND` (`<LSGT>`), keycode neutro sem conflito físico neste teclado.
+
+### Arquivos a criar/restaurar
+
+**`~/.config/hypr/t14br.xkb`**
+```xkb
+xkb_keymap {
+    xkb_keycodes  { include "evdev+aliases(qwerty)" };
+    xkb_types     { include "complete" };
+    xkb_compat    { include "complete" };
+    xkb_symbols   {
+        include "pc+br(abnt2)+inet(evdev)"
+        key <LSGT> { [slash, question, degree, questiondown] };
+    };
+    xkb_geometry  { include "pc(pc105)" };
+};
+```
+
+**`/etc/keyd/default.conf`** (requer sudo)
+```ini
+[ids]
+*
+
+[main]
+rightcontrol = 102nd
+```
+
+**`~/.config/hypr/hyprland.conf`** — bloco `input`:
+```
+input {
+    kb_file = ~/.config/hypr/t14br.xkb
+    # NÃO adicionar kb_layout/kb_variant/kb_model/kb_rules
+    # Com kb_file definido, o Hyprland reaplica o layout padrão por cima após reloads
+    ...
+}
+```
+
+### Instalar e ativar
+
+```bash
+# 1. Instalar keyd (se não instalado)
+paru -S keyd
+
+# 2. Criar /etc/keyd/default.conf com o conteúdo acima (requer sudo)
+sudo mkdir -p /etc/keyd
+# (copiar o conteúdo manualmente ou via echo)
+
+# 3. Ativar keyd
+sudo systemctl enable --now keyd
+
+# 4. Criar ~/.config/hypr/t14br.xkb com o conteúdo acima
+
+# 5. Recarregar Hyprland
+hyprctl keyword input:kb_file ~/.config/hypr/t14br.xkb
+```
+
+### Reaplicar após mudanças
+
+```bash
+hyprctl keyword input:kb_file ~/.config/hypr/t14br.xkb  # mudança no XKB
+sudo systemctl restart keyd                              # mudança no keyd
+```
+
+---
+
+## 10. Troubleshooting
 
 ### `claude: command not found`
 
