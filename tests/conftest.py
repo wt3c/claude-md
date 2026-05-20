@@ -136,29 +136,54 @@ def mock_commands(monkeypatch) -> dict[str, Mock]:
         "git": Mock(return_value=subprocess.CompletedProcess(
             args=["git", "--version"],
             returncode=0,
-            stdout=b"git version 2.43.0\n",
-            stderr=b""
+            stdout="git version 2.43.0\n",
+            stderr=""
         )),
         "node": Mock(return_value=subprocess.CompletedProcess(
             args=["node", "--version"],
             returncode=0,
-            stdout=b"v20.11.0\n",
-            stderr=b""
+            stdout="v20.11.0\n",
+            stderr=""
         )),
         "claude": Mock(return_value=subprocess.CompletedProcess(
             args=["claude", "--version"],
             returncode=0,
-            stdout=b"claude-code 0.7.0\n",
-            stderr=b""
+            stdout="claude-code 0.7.0\n",
+            stderr=""
         )),
     }
+
+    # Salvar referência original do subprocess.run
+    original_run = subprocess.run
 
     def mock_run(args, *run_args, **run_kwargs):
         cmd = args[0] if isinstance(args, list) else args.split()[0]
         if cmd in mocks:
-            return mocks[cmd].return_value
-        # Deixa outros comandos passarem
-        return subprocess.run(args, *run_args, **run_kwargs)
+            mock_obj = mocks[cmd]
+
+            # Se side_effect está setado, levantar a exceção
+            if mock_obj.side_effect is not None:
+                if isinstance(mock_obj.side_effect, Exception):
+                    raise mock_obj.side_effect
+                elif callable(mock_obj.side_effect):
+                    return mock_obj.side_effect(*args, **run_kwargs)
+                else:
+                    raise mock_obj.side_effect
+
+            result = mock_obj.return_value
+            # Se text=True foi passado e stdout/stderr são strings, manter
+            # Se text=False ou não passado e stdout/stderr são strings, converter para bytes
+            text_mode = run_kwargs.get('text', False)
+            if not text_mode and isinstance(result.stdout, str):
+                result = subprocess.CompletedProcess(
+                    args=result.args,
+                    returncode=result.returncode,
+                    stdout=result.stdout.encode() if result.stdout else b"",
+                    stderr=result.stderr.encode() if result.stderr else b""
+                )
+            return result
+        # Deixa outros comandos passarem para execução real
+        return original_run(args, *run_args, **run_kwargs)
 
     monkeypatch.setattr(subprocess, "run", mock_run)
 

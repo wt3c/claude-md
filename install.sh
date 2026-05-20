@@ -1,6 +1,28 @@
 #!/usr/bin/env bash
 # install.sh — Claude Code: instalação e configuração global (Linux)
 # Uso: bash install.sh
+#
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ⚠️  AVISO DE DEPRECIAÇÃO
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#
+# Este script Bash está DEPRECIADO e será removido em versões futuras.
+#
+# ✅ Use o novo instalador Python unificado:
+#
+#     uv run python install.py
+#
+# Vantagens do novo instalador:
+# • Multiplataforma (Linux/macOS/Windows)
+# • CLI moderna com Rich (cores, progresso)
+# • Integração com Infisical para secrets
+# • Testado (73 testes, 75% cobertura)
+# • Type-safe (mypy strict)
+# • Melhor tratamento de erros
+#
+# Documentação completa: README.md
+#
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 set -euo pipefail
 

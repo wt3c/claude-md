@@ -1,6 +1,28 @@
 #Requires -Version 5.1
 # install.ps1 — Claude Code: instalação e configuração global (Windows)
 # Uso: .\install.ps1
+#
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ⚠️  AVISO DE DEPRECIAÇÃO
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#
+# Este script PowerShell está DEPRECIADO e será removido em versões futuras.
+#
+# ✅ Use o novo instalador Python unificado:
+#
+#     uv run python install.py
+#
+# Vantagens do novo instalador:
+# • Multiplataforma (Linux/macOS/Windows)
+# • CLI moderna com Rich (cores, progresso)
+# • Integração com Infisical para secrets
+# • Testado (73 testes, 75% cobertura)
+# • Type-safe (mypy strict)
+# • Melhor tratamento de erros
+#
+# Documentação completa: README.md
+#
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [CmdletBinding()]
 param()
