@@ -25,11 +25,12 @@ def load_secrets() -> Dict[str, str]:
     try:
         from secretsloader import load_secrets as _load_secrets
 
-        secrets = _load_secrets()
+        # load_secrets() retorna int (count) e carrega no os.environ
+        _load_secrets()
 
-        # Verificar secrets obrigatórios
+        # Verificar secrets obrigatórios no os.environ
         required = ["ANTHROPIC_FOUNDRY_API_KEY", "GITLAB_TOKEN", "POSTMAN_API_KEY"]
-        missing = [key for key in required if key not in secrets]
+        missing = [key for key in required if key not in os.environ]
 
         if missing:
             raise RuntimeError(
@@ -37,7 +38,8 @@ def load_secrets() -> Dict[str, str]:
                 "Configure no projeto Infisical primeiro."
             )
 
-        return secrets
+        # Retornar dicionário com os secrets
+        return {key: os.environ[key] for key in required}
     except ImportError as e:
         raise RuntimeError(
             "secretsloader não instalado. Instale com: uv add secretsloader"

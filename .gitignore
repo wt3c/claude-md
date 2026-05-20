@@ -18,8 +18,7 @@ venv/
 ENV/
 env/
 
-# UV
-uv.lock
+# UV (não ignorar uv.lock - deve ser versionado)
 
 # Pytest
 .pytest_cache/

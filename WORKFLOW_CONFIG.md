@@ -54,7 +54,7 @@ git push
 
 ## Integração com Instalação
 
-Este workflow deve ser explicado durante o setup inicial (`install.sh` ou equivalente) e referenciado na memória global do Claude para que seja seguido automaticamente.
+Este workflow deve ser explicado durante o setup inicial (`install.py`) e referenciado na memória global do Claude para que seja seguido automaticamente.
 
 ---
 

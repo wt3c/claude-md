@@ -5,7 +5,7 @@
 [![Coverage](https://img.shields.io/badge/coverage-75.61%25-green.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Instalador **multiplataforma** em Python para configuração global do Claude Code, substituindo completamente os scripts `install.sh` (800 linhas) e `install.ps1` (625 linhas) com solução unificada, testável e moderna.
+Instalador **multiplataforma** em Python para configuração global do Claude Code com solução unificada, testável e moderna.
 
 ---
 
@@ -372,25 +372,29 @@ claude-md/
 │   ├── mcp.py              # Instalação de MCP servers
 │   ├── platform.py         # Detecção de SO e shell
 │   ├── prereqs.py          # Verificação de pré-requisitos
-│   └── shell_config.py     # Configuração de shell (bash/zsh/fish/ps1)
+│   ├── shell_config.py     # Configuração de shell (bash/zsh/fish/ps1)
+│   └── uninstall.py        # Desinstalação completa
 │
-├── tests/                  # Suíte de testes (73 testes)
+├── tests/                  # Suíte de testes (83 testes)
 │   ├── conftest.py         # Fixtures compartilhadas
-│   ├── test_api_keys.py    # 8 testes
-│   ├── test_backup_restore.py  # 11 testes (2 xfailed)
-│   ├── test_cli.py         # 12 testes
-│   ├── test_install_files.py   # 8 testes
-│   ├── test_mcp.py         # 7 testes
-│   ├── test_platform.py    # 12 testes
-│   ├── test_prereqs.py     # 8 testes
-│   └── test_shell_config.py    # 7 testes
+│   ├── test_api_keys.py
+│   ├── test_backup_restore.py
+│   ├── test_cli.py
+│   ├── test_install_files.py
+│   ├── test_mcp.py
+│   ├── test_platform.py
+│   ├── test_prereqs.py
+│   └── test_shell_config.py
 │
-├── install.py              # Entrypoint
+├── install.py              # Entrypoint instalação
+├── uninstall.py            # Entrypoint desinstalação
 ├── pyproject.toml          # Configuração UV, deps, testes
 ├── .env.example            # Template Infisical
-├── README.md               # Este arquivo
 │
 ├── CLAUDE.md               # Instruções para Claude Code
+├── INSTALL.md              # Guia de instalação detalhado
+├── UNINSTALL.md            # Guia de desinstalação
+├── WORKFLOW_CONFIG.md      # Workflow de desenvolvimento
 ├── settings.json           # Config Claude Code
 ├── skills/                 # Skills customizadas
 ├── commands/               # Comandos customizados
@@ -523,48 +527,6 @@ Instala automaticamente:
 | `.mcp.json` | **Preserva** se existir (pode ter senha postgres) |
 | `tasks/*.md` | **Preserva** se existir (histórico do usuário) |
 | `audit.log` | **Sempre cria** (vazio) |
-
----
-
-## 🔄 Migração dos Scripts Antigos
-
-### Equivalência de Funcionalidades
-
-| `install.sh` / `install.ps1` | `install.py` | Status |
-|------------------------------|--------------|--------|
-| `check_prereqs()` | `installer/prereqs.py` | ✅ Implementado |
-| `backup_secrets()` | `installer/backup.py` | ✅ Implementado |
-| `install_to_dir()` | `installer/files.py` | ✅ Implementado |
-| `configure_api_key()` | `installer/api_keys.py::configure_foundry_key()` | ✅ Implementado |
-| `configure_gitlab()` | `installer/api_keys.py::configure_gitlab_token()` | ✅ Implementado |
-| `configure_postman_key()` | `installer/api_keys.py::configure_postman_key()` | ✅ Implementado |
-| `install_mcps()` | `installer/mcp.py` | ✅ Implementado |
-| Shell heredocs (bash/zsh/fish) | `installer/shell_config.py` | ✅ Implementado |
-| PowerShell here-strings | `installer/shell_config.py` | ✅ Implementado |
-
-### Diferenças Principais
-
-| Aspecto | Scripts Antigos | `install.py` |
-|---------|----------------|--------------|
-| **Linguagem** | Bash + PowerShell | Python 3.12.10 |
-| **Linhas de código** | ~1425 (800+625) | ~500 (core logic) |
-| **Manutenibilidade** | 2 scripts separados | 1 codebase unificado |
-| **Testes** | ❌ Nenhum | ✅ 73 testes (75% cobertura) |
-| **Type Safety** | ❌ Nenhum | ✅ mypy strict |
-| **CLI** | Básico | ✅ Rich (cores, progresso) |
-| **Secrets** | Hardcoded prompts | ✅ Infisical integrado |
-| **Idempotência** | Parcial | ✅ Completa |
-| **Erro Handling** | `set -e` | ✅ Try/except estruturado |
-
-### Depreciação dos Scripts Antigos
-
-**Status**: Scripts antigos (`install.sh`, `install.ps1`) ainda existem mas devem ser marcados como depreciados.
-
-**TODO**: Adicionar aviso no topo de cada script:
-```bash
-# ⚠️ DEPRECIADO: Use `uv run python install.py` em vez deste script.
-# Este arquivo será removido em versões futuras.
-```
 
 ---
 
