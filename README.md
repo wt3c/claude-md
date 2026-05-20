@@ -1,7 +1,7 @@
 # Claude Code — Instalador Python Unificado
 
 [![Python 3.12.10](https://img.shields.io/badge/python-3.12.10-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-71%20passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-83%20passing-brightgreen.svg)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-75.61%25-green.svg)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -116,6 +116,43 @@ claude-pro --version
 
 # Listar MCPs instalados
 claude mcp list
+```
+
+---
+
+## 🗑️ Desinstalação
+
+Para remover completamente a configuração do Claude Code:
+
+```bash
+# Desinstalação automática com preview e backup
+python uninstall.py
+```
+
+O script irá:
+1. Mostrar preview do que será removido (diretórios, arquivos shell, tamanho)
+2. Pedir confirmação
+3. Criar backup automático em `~/.claude-backups/`
+4. Remover configurações (`~/.claude-pessoal/`, `~/.claude-mprj/`, `~/.claude/`)
+5. Limpar integrações shell (`.bashrc`, `.zshrc`, `claude.fish`)
+
+**Documentação completa**: [UNINSTALL.md](UNINSTALL.md)
+
+### Desinstalação Manual
+
+Se preferir fazer manualmente:
+
+```bash
+# Remover diretórios
+rm -rf ~/.claude-pessoal ~/.claude-mprj ~/.claude
+
+# Remover chave MPRJ (Linux)
+rm -f ~/.secrets/claude-mprj.key
+
+# Remover bloco shell
+sed -i '/# --- Claude Code: múltiplas contas/,/# --- end Claude Code multi-conta ---/d' ~/.bashrc
+sed -i '/# --- Claude Code: múltiplas contas/,/# --- end Claude Code multi-conta ---/d' ~/.zshrc
+rm ~/.config/fish/conf.d/claude.fish  # Fish
 ```
 
 ---
