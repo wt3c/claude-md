@@ -30,9 +30,9 @@ class TestBackupSecrets:
         self, installer_env, existing_secrets
     ):
         """Backup cria diretório com timestamp no formato YYYYMMDD-HHMMSS."""
-        from .test_helpers import backup_secrets_python
+        from installer.backup import backup_secrets
 
-        backup_dir = backup_secrets_python(
+        backup_dir = backup_secrets(
             installer_env["home"], installer_env["backup_root"]
         )
 
@@ -47,9 +47,9 @@ class TestBackupSecrets:
         self, installer_env, existing_secrets
     ):
         """Backup preserva estrutura de diretórios relativa ao HOME."""
-        from .test_helpers import backup_secrets_python
+        from installer.backup import backup_secrets
 
-        backup_dir = backup_secrets_python(
+        backup_dir = backup_secrets(
             installer_env["home"], installer_env["backup_root"]
         )
 
@@ -66,9 +66,9 @@ class TestBackupSecrets:
         self, installer_env, existing_secrets
     ):
         """Backup copia todos os arquivos sensíveis existentes."""
-        from .test_helpers import backup_secrets_python
+        from installer.backup import backup_secrets
 
-        backup_dir = backup_secrets_python(
+        backup_dir = backup_secrets(
             installer_env["home"], installer_env["backup_root"]
         )
 
@@ -98,7 +98,7 @@ class TestBackupSecrets:
 
     def test_backup_creates_env_snapshot(self, installer_env, temp_home):
         """Backup cria env.snapshot com variáveis de ambiente."""
-        from .test_helpers import backup_secrets_python
+        from installer.backup import backup_secrets
 
         # Adicionar variáveis aos arquivos rc
         (temp_home / ".bashrc").write_text("""
@@ -113,7 +113,7 @@ export PATH=/usr/bin:$PATH
 set -x POSTMAN_API_KEY "PMAK-test-key-5678"
 """)
 
-        backup_dir = backup_secrets_python(
+        backup_dir = backup_secrets(
             installer_env["home"], installer_env["backup_root"]
         )
 
@@ -127,9 +127,9 @@ set -x POSTMAN_API_KEY "PMAK-test-key-5678"
 
     def test_backup_sets_correct_permissions(self, installer_env, existing_secrets):
         """Backup directory tem chmod 700."""
-        from .test_helpers import backup_secrets_python
+        from installer.backup import backup_secrets
 
-        backup_dir = backup_secrets_python(
+        backup_dir = backup_secrets(
             installer_env["home"], installer_env["backup_root"]
         )
 
@@ -137,7 +137,7 @@ set -x POSTMAN_API_KEY "PMAK-test-key-5678"
 
     def test_backup_keeps_only_10_recent_backups(self, installer_env):
         """Mantém apenas os 10 backups mais recentes, remove antigos."""
-        from .test_helpers import backup_secrets_python
+        from installer.backup import backup_secrets
 
         backup_root = installer_env["backup_root"]
 
@@ -149,7 +149,7 @@ set -x POSTMAN_API_KEY "PMAK-test-key-5678"
             (old_backup / "marker.txt").write_text(f"backup {i}")
 
         # Criar novo backup
-        backup_dir = backup_secrets_python(
+        backup_dir = backup_secrets(
             installer_env["home"], backup_root
         )
 
@@ -174,10 +174,10 @@ class TestRestoreSecrets:
         self, installer_env, existing_secrets
     ):
         """Restore não sobrescreve arquivos que já existem."""
-        from .test_helpers import backup_secrets_python, restore_secrets_python
+        from installer.backup import backup_secrets, restore_secrets
 
         # Fazer backup
-        backup_dir = backup_secrets_python(
+        backup_dir = backup_secrets(
             installer_env["home"], installer_env["backup_root"]
         )
 
@@ -187,7 +187,7 @@ class TestRestoreSecrets:
         key_file.write_text("sk-ant-MODIFIED-key-9999")
 
         # Restore
-        restored = restore_secrets_python(
+        restored = restore_secrets(
             installer_env["home"], backup_dir
         )
 
@@ -197,10 +197,10 @@ class TestRestoreSecrets:
 
     def test_restore_copies_missing_files(self, installer_env, existing_secrets):
         """Restore copia apenas arquivos que estão faltando."""
-        from .test_helpers import backup_secrets_python, restore_secrets_python
+        from installer.backup import backup_secrets, restore_secrets
 
         # Fazer backup
-        backup_dir = backup_secrets_python(
+        backup_dir = backup_secrets(
             installer_env["home"], installer_env["backup_root"]
         )
 
@@ -215,7 +215,7 @@ class TestRestoreSecrets:
         creds_file.unlink()
 
         # Restore
-        restored = restore_secrets_python(
+        restored = restore_secrets(
             installer_env["home"], backup_dir
         )
 
@@ -228,14 +228,14 @@ class TestRestoreSecrets:
 
     def test_restore_with_no_missing_files(self, installer_env, existing_secrets):
         """Restore retorna 0 quando nenhum arquivo está faltando."""
-        from .test_helpers import backup_secrets_python, restore_secrets_python
+        from installer.backup import backup_secrets, restore_secrets
 
-        backup_dir = backup_secrets_python(
+        backup_dir = backup_secrets(
             installer_env["home"], installer_env["backup_root"]
         )
 
         # Não remover nenhum arquivo
-        restored = restore_secrets_python(
+        restored = restore_secrets(
             installer_env["home"], backup_dir
         )
 
@@ -243,9 +243,9 @@ class TestRestoreSecrets:
 
     def test_restore_creates_parent_directories(self, installer_env, existing_secrets):
         """Restore cria diretórios pai se não existirem."""
-        from .test_helpers import backup_secrets_python, restore_secrets_python
+        from installer.backup import backup_secrets, restore_secrets
 
-        backup_dir = backup_secrets_python(
+        backup_dir = backup_secrets(
             installer_env["home"], installer_env["backup_root"]
         )
 
@@ -255,7 +255,7 @@ class TestRestoreSecrets:
         shutil.rmtree(claude_mprj)
 
         # Restore
-        restored = restore_secrets_python(
+        restored = restore_secrets(
             installer_env["home"], backup_dir
         )
 
@@ -270,10 +270,10 @@ class TestBackupRestoreIntegration:
     @pytest.mark.xfail(reason="Related to test_backup_copies_all_sensitive_files")
     def test_backup_restore_roundtrip(self, installer_env, existing_secrets):
         """Backup seguido de restore recupera estado original."""
-        from .test_helpers import backup_secrets_python, restore_secrets_python
+        from installer.backup import backup_secrets, restore_secrets
 
         # Fazer backup
-        backup_dir = backup_secrets_python(
+        backup_dir = backup_secrets(
             installer_env["home"], installer_env["backup_root"]
         )
 
@@ -288,7 +288,7 @@ class TestBackupRestoreIntegration:
             path.unlink()
 
         # Restore
-        restored = restore_secrets_python(
+        restored = restore_secrets(
             installer_env["home"], backup_dir
         )
 

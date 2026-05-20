@@ -1,7 +1,38 @@
 # IDEs
 .idea/
+.vscode/
 
 # Credenciais e config local (nunca commitar)
 .env
 settings.local.json
 .claude.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# UV
+uv.lock
+
+# Pytest
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+.hypothesis/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ruff
+.ruff_cache/

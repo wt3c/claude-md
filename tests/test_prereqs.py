@@ -10,60 +10,89 @@ class TestCheckPrereqs:
 
     def test_detects_git_present(self, mock_commands):
         """Detecta git instalado e retorna versão."""
-        from .test_helpers import check_prereqs_python
+        from installer.prereqs import check_prereqs
 
-        result = check_prereqs_python()
+        result = check_prereqs()
         assert result["git"] is not None
+        assert isinstance(result["git"], str)
 
-    def test_detects_git_missing(self, mock_commands):
-        """Detecta git ausente."""
-        mock_commands["git"].return_value = subprocess.CompletedProcess(
-            args=["git", "--version"],
-            returncode=127,
-            stdout=b"",
-            stderr=b"git: command not found"
-        )
-        mock_commands["git"].side_effect = FileNotFoundError
+    def test_raises_error_when_git_missing(self, monkeypatch):
+        """Levanta RuntimeError quando git ausente."""
+        def mock_run(args, *run_args, **kwargs):
+            if args[0] == "git":
+                raise FileNotFoundError()
+            return subprocess.run(args, *run_args, **kwargs)
 
-        from .test_helpers import check_prereqs_python
+        monkeypatch.setattr(subprocess, "run", mock_run)
 
-        result = check_prereqs_python()
-        assert result["git"] is None
+        from installer.prereqs import check_prereqs
+
+        with pytest.raises(RuntimeError, match="Git não encontrado"):
+            check_prereqs()
 
     def test_detects_node_version_18_or_higher(self, mock_commands):
         """Aceita Node.js v18+."""
-        from .test_helpers import check_prereqs_python
+        from installer.prereqs import check_prereqs
 
-        result = check_prereqs_python()
+        result = check_prereqs()
         assert result["node_major"] >= 18
+        assert isinstance(result["node"], str)
 
-    def test_rejects_node_version_below_18(self, mock_commands):
-        """Rejeita Node.js < v18."""
+    def test_raises_error_when_node_below_18(self, mock_commands):
+        """Levanta RuntimeError para Node.js < v18."""
+        # Modificar mock para retornar Node v16
         mock_commands["node"].return_value = subprocess.CompletedProcess(
             args=["node", "--version"],
             returncode=0,
-            stdout=b"v16.20.0\n",
-            stderr=b""
+            stdout="v16.20.0\n",
+            stderr=""
         )
 
-        from .test_helpers import check_prereqs_python
+        from installer.prereqs import check_prereqs
 
-        result = check_prereqs_python()
-        assert result["node_major"] < 18
+        with pytest.raises(RuntimeError, match="Node.js v16.20.0 encontrado — requer v18\\+"):
+            check_prereqs()
+
+    def test_raises_error_when_node_missing(self, mock_commands):
+        """Levanta RuntimeError quando Node.js ausente."""
+        # Configurar mock para levantar FileNotFoundError
+        mock_commands["node"].side_effect = FileNotFoundError()
+
+        from installer.prereqs import check_prereqs
+
+        with pytest.raises(RuntimeError, match="Node.js não encontrado"):
+            check_prereqs()
 
     def test_detects_claude_present(self, mock_commands):
         """Detecta Claude Code instalado."""
-        from .test_helpers import check_prereqs_python
+        from installer.prereqs import check_prereqs
 
-        result = check_prereqs_python()
+        result = check_prereqs()
         assert result["claude"] is not None
+        assert isinstance(result["claude"], str)
 
-    @pytest.mark.xfail(reason="Mock not working correctly - recursion issue")
-    def test_detects_claude_missing(self, mock_commands):
-        """Detecta Claude Code ausente."""
-        mock_commands["claude"].side_effect = FileNotFoundError
+    def test_raises_error_when_claude_missing(self, mock_commands):
+        """Levanta RuntimeError quando Claude Code ausente."""
+        # Configurar mock para levantar FileNotFoundError
+        mock_commands["claude"].side_effect = FileNotFoundError()
 
-        from .test_helpers import check_prereqs_python
+        from installer.prereqs import check_prereqs
 
-        result = check_prereqs_python()
-        assert result["claude"] is None
+        with pytest.raises(RuntimeError, match="Claude Code não encontrado"):
+            check_prereqs()
+
+    def test_returns_all_versions_when_successful(self, mock_commands):
+        """Retorna dict completo com todas as versões quando bem-sucedido."""
+        from installer.prereqs import check_prereqs
+
+        result = check_prereqs()
+
+        assert "git" in result
+        assert "node" in result
+        assert "node_major" in result
+        assert "claude" in result
+
+        assert result["git"] is not None
+        assert result["node"] is not None
+        assert result["node_major"] >= 18
+        assert result["claude"] is not None
