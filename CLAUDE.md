@@ -227,6 +227,52 @@ class FakeRepositorio:
 
 ---
 
+## 📊 Diagramas e Visualizações
+
+**REGRA ABSOLUTA: Sempre usar Mermaid para diagramas em markdown.**
+
+Nunca usar ferramentas externas (draw.io, Excalidraw, imagens estáticas) quando Mermaid puder representar.
+
+### Tipos suportados
+
+```mermaid
+flowchart LR
+    A[Fluxogramas] --> B[Sequência]
+    B --> C[Classes]
+    C --> D[ER/Banco]
+    D --> E[Gantt]
+```
+
+### Exemplos de uso
+
+**Arquitetura/Fluxo:**
+```mermaid
+flowchart TD
+    Cliente -->|HTTP| API
+    API --> Cache
+    API --> BD[(PostgreSQL)]
+```
+
+**Sequência:**
+```mermaid
+sequenceDiagram
+    User->>+API: POST /login
+    API->>+DB: SELECT user
+    DB-->>-API: user data
+    API-->>-User: JWT token
+```
+
+**ER Diagram:**
+```mermaid
+erDiagram
+    USER ||--o{ ORDER : places
+    ORDER ||--|{ ITEM : contains
+```
+
+Preferir diagramas simples e diretos — legibilidade > detalhamento excessivo.
+
+---
+
 ## 🔄 Orquestração de Workflow
 
 - Tarefas 3+ etapas → escrever plano em `tasks/todo.md` antes de implementar
