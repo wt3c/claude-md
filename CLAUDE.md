@@ -122,6 +122,72 @@ Precisa de contexto isolado?
 ```
 
 ---
+---
+
+## 🎓 Conceitos em Estudo Ativo
+
+<!-- Incluir nos exemplos sempre que relevante e natural -->
+
+### Python: Dataclasses
+
+- Módulo: `dataclasses`
+- Usar para: DTOs, Value Objects, modelos de dados, fakes de teste
+- Sempre preferir a `dict` solto quando o dado tem estrutura definida
+
+```python
+from dataclasses import dataclass, field
+
+
+@dataclass
+class Usuario:
+    id: int
+    username: str
+    email: str
+    grupos: list[str] = field(default_factory=list)
+```
+
+### Python: Structural Typing com Protocol
+
+- Módulo: `typing`
+- Categoria: **Structural Typing** (não Duck Typing — Duck Typing é runtime, Protocol é estático)
+- Usar para: contratos/interfaces, injeção de dependência, fakes testáveis
+- Classe não precisa herdar — basta ter os métodos do contrato
+
+```python
+from typing import Protocol
+from dataclasses import dataclass
+
+
+# Contrato (Structural Typing)
+class RepositorioProtocol(Protocol):
+    def buscar(self, id: int) -> "Usuario": ...
+
+    def salvar(self, usuario: "Usuario") -> None: ...
+
+
+# Dado (Dataclass)
+@dataclass
+class Usuario:
+    id: int
+    username: str
+    email: str
+
+
+# Fake para teste — satisfaz Protocol sem herdar nada
+class FakeRepositorio:
+    def __init__(self):
+        self._db: list[Usuario] = []
+
+    def buscar(self, id: int) -> Usuario:
+        return next(u for u in self._db if u.id == id)
+
+    def salvar(self, usuario: Usuario) -> None:
+        self._db.append(usuario)
+```
+
+> **Regra:** `@dataclass` = o que o objeto **carrega** | `Protocol` = o que o objeto **sabe fazer**
+
+---
 
 ## ✅ Checklist Universal Pré-Entrega
 
