@@ -26,13 +26,13 @@ Instalador **multiplataforma** em Python para configuração global do Claude Co
 
 ### Sistema
 
-| Ferramenta | Versão Mínima | Verificado Automaticamente |
-|------------|---------------|----------------------------|
-| **Python** | 3.12.10 (estrito) | ❌ (gerenciado por `uv`) |
-| **UV** | latest | ❌ (instale manualmente) |
-| **Git** | qualquer | ✅ |
-| **Node.js** | v18+ | ✅ |
-| **Claude Code** | qualquer | ✅ |
+| Ferramenta      | Versão Mínima     | Verificado Automaticamente |
+| --------------- | ----------------- | -------------------------- |
+| **Python**      | 3.12.10 (estrito) | ❌ (gerenciado por `uv`)   |
+| **UV**          | latest            | ❌ (instale manualmente)   |
+| **Git**         | qualquer          | ✅                         |
+| **Node.js**     | v18+              | ✅                         |
+| **Claude Code** | qualquer          | ✅                         |
 
 ### Infisical (Secrets Management)
 
@@ -53,6 +53,8 @@ Para instalação completa com múltiplas contas, você precisa configurar:
 Veja [Configuração do Infisical](#-configuração-do-infisical) para detalhes.
 
 ---
+
+                                                                                                                                ghgghgh
 
 ## 🚀 Instalação Rápida
 
@@ -130,6 +132,7 @@ python uninstall.py
 ```
 
 O script irá:
+
 1. Mostrar preview do que será removido (diretórios, arquivos shell, tamanho)
 2. Pedir confirmação
 3. Criar backup automático em `~/.claude-backups/`
@@ -168,6 +171,7 @@ uv run python install.py
 ```
 
 Pergunta sobre:
+
 - Configurar múltiplas contas?
 - Configurar shell?
 - Instalar MCP servers?
@@ -198,13 +202,13 @@ Instala/atualiza apenas MCP servers globais.
 
 ### Flags Disponíveis
 
-| Flag | Descrição |
-|------|-----------|
-| `--non-interactive` | Modo não-interativo (sem prompts) |
-| `--multi-account` | Força configuração de múltiplas contas (MPRJ + Pessoal) |
-| `--update-only` | Atualiza apenas arquivos (preserva configs) |
-| `--mcps-only` | Instala apenas MCP servers |
-| `--help` | Mostra ajuda |
+| Flag                | Descrição                                               |
+| ------------------- | ------------------------------------------------------- |
+| `--non-interactive` | Modo não-interativo (sem prompts)                       |
+| `--multi-account`   | Força configuração de múltiplas contas (MPRJ + Pessoal) |
+| `--update-only`     | Atualiza apenas arquivos (preserva configs)             |
+| `--mcps-only`       | Instala apenas MCP servers                              |
+| `--help`            | Mostra ajuda                                            |
 
 ### Exemplo de Output
 
@@ -431,6 +435,7 @@ claude-md/
 ### 2. Verificação de Pré-Requisitos
 
 Valida antes de instalar:
+
 - ✅ Git instalado
 - ✅ Node.js v18+ (requerido para MCPs)
 - ✅ Claude Code instalado
@@ -441,13 +446,14 @@ Valida antes de instalar:
 
 Configura **3 ambientes isolados**:
 
-| Diretório | Conta | Uso |
-|-----------|-------|-----|
-| `~/.claude/` | Padrão | Config compartilhada base |
-| `~/.claude-mprj/` | MPRJ (Foundry) | Trabalho corporativo |
-| `~/.claude-pessoal/` | Pessoal (PRO) | Projetos pessoais |
+| Diretório            | Conta          | Uso                       |
+| -------------------- | -------------- | ------------------------- |
+| `~/.claude/`         | Padrão         | Config compartilhada base |
+| `~/.claude-mprj/`    | MPRJ (Foundry) | Trabalho corporativo      |
+| `~/.claude-pessoal/` | Pessoal (PRO)  | Projetos pessoais         |
 
 **Funções shell criadas**:
+
 - `claude-mprj` → usa `~/.claude-mprj/` + Foundry API
 - `claude-pro` → usa `~/.claude-pessoal/` + Anthropic API
 - `claude` → alias que avisa para usar uma das duas acima
@@ -457,6 +463,7 @@ Configura **3 ambientes isolados**:
 **Cache de 7 dias** do melhor modelo disponível:
 
 **MPRJ (Foundry)**:
+
 ```bash
 # Tenta em ordem: sonnet-4-5 > haiku-4-5
 # Cache em ~/.claude-mprj/.model-cache.json (7 dias)
@@ -466,6 +473,7 @@ claude-mprj --model claude-sonnet-4-5  # força modelo específico
 ```
 
 **Pessoal (PRO)**:
+
 ```bash
 # Tenta em ordem: sonnet-4-6 > haiku-4-5-20251001
 # Detecta modelos disponíveis via API Anthropic
@@ -476,6 +484,7 @@ ch          # alias para haiku-4-5-20251001
 ```
 
 **Atualizar cache manualmente**:
+
 ```bash
 update-mprj-model
 ```
@@ -485,14 +494,17 @@ update-mprj-model
 **Suporta**: bash, zsh, fish, powershell
 
 **Versioning**:
+
 - `v1` (legado): removido automaticamente com backup
 - `v2` (atual): com model routing e multi-conta
 
 **Detecção automática**:
+
 - Linux/macOS: lê `$SHELL`
 - Windows: powershell
 
 **Arquivos modificados**:
+
 - Bash: `~/.bashrc`
 - Zsh: `~/.zshrc`
 - Fish: `~/.config/fish/conf.d/claude.fish`
@@ -504,12 +516,12 @@ update-mprj-model
 
 Instala automaticamente:
 
-| MCP | Package | Uso |
-|-----|---------|-----|
+| MCP            | Package                                   | Uso                           |
+| -------------- | ----------------------------------------- | ----------------------------- |
 | **filesystem** | `@modelcontextprotocol/server-filesystem` | Acesso estruturado a arquivos |
-| **memory** | `@modelcontextprotocol/server-memory` | Persistência cross-session |
-| **gitlab** | `@modelcontextprotocol/server-gitlab` | Issues, MRs, pipelines |
-| **postman** | `@postman/postman-mcp-server` | Collections, APIs |
+| **memory**     | `@modelcontextprotocol/server-memory`     | Persistência cross-session    |
+| **gitlab**     | `@modelcontextprotocol/server-gitlab`     | Issues, MRs, pipelines        |
+| **postman**    | `@postman/postman-mcp-server`             | Collections, APIs             |
 
 **Escopo**: `--scope user` (global para o usuário)
 
@@ -517,16 +529,16 @@ Instala automaticamente:
 
 ### 7. Instalação de Arquivos (Smart Overwrite)
 
-| Arquivo/Dir | Comportamento |
-|-------------|---------------|
-| `CLAUDE.md` | **Sempre sobrescreve** |
-| `settings.json` | **Sempre sobrescreve** |
-| `WORKFLOW_CONFIG.md` | **Sempre sobrescreve** |
-| `skills/` | **Sempre sobrescreve** (recursivo) |
-| `commands/` | **Sempre sobrescreve** (recursivo) |
-| `.mcp.json` | **Preserva** se existir (pode ter senha postgres) |
-| `tasks/*.md` | **Preserva** se existir (histórico do usuário) |
-| `audit.log` | **Sempre cria** (vazio) |
+| Arquivo/Dir          | Comportamento                                     |
+| -------------------- | ------------------------------------------------- |
+| `CLAUDE.md`          | **Sempre sobrescreve**                            |
+| `settings.json`      | **Sempre sobrescreve**                            |
+| `WORKFLOW_CONFIG.md` | **Sempre sobrescreve**                            |
+| `skills/`            | **Sempre sobrescreve** (recursivo)                |
+| `commands/`          | **Sempre sobrescreve** (recursivo)                |
+| `.mcp.json`          | **Preserva** se existir (pode ter senha postgres) |
+| `tasks/*.md`         | **Preserva** se existir (histórico do usuário)    |
+| `audit.log`          | **Sempre cria** (vazio)                           |
 
 ---
 
@@ -570,6 +582,7 @@ npm install -g @anthropic-ai/claude-code
 ### Erro: "Infisical não configurado"
 
 Se você **não precisa de múltiplas contas**, pode pular a configuração do Infisical:
+
 ```bash
 # Instalação básica (sem API keys automáticas)
 uv run python install.py
@@ -577,6 +590,7 @@ uv run python install.py
 ```
 
 Configure API keys manualmente depois:
+
 ```bash
 # MPRJ
 mkdir -p ~/.secrets
@@ -619,6 +633,7 @@ MIT © 2026 Welington Souza
 5. Abra um Merge Request
 
 **Importante**:
+
 - ✅ Todos os testes devem passar (`uv run pytest`)
 - ✅ Cobertura ≥ 75% (`uv run pytest --cov`)
 - ✅ Lint limpo (`uv run ruff check .`)
