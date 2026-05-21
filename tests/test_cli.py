@@ -1,4 +1,5 @@
 """Testes do CLI principal."""
+
 import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -133,6 +134,7 @@ class TestCLIInteractive:
         """Modo interativo: usuário aceita multi-account."""
         # Mock Confirm.ask para retornar True
         from rich.prompt import Confirm
+
         monkeypatch.setattr(Confirm, "ask", lambda *args, **kwargs: True)
 
         result = cli_runner.invoke(main, [])
@@ -153,6 +155,7 @@ class TestCLIInteractive:
             return call_count["count"] != 1
 
         from rich.prompt import Confirm
+
         monkeypatch.setattr(Confirm, "ask", mock_confirm_ask)
 
         result = cli_runner.invoke(main, [])
@@ -160,7 +163,9 @@ class TestCLIInteractive:
         assert result.exit_code == 0
         assert "~/.claude configurado" in result.output
         # Não deve configurar MPRJ
-        assert "~/.claude-mprj" not in result.output or "claude-md" in result.output  # pode aparecer no path do repo
+        assert (
+            "~/.claude-mprj" not in result.output or "claude-md" in result.output
+        )  # pode aparecer no path do repo
 
 
 class TestCLIUpdateOnly:
@@ -168,9 +173,7 @@ class TestCLIUpdateOnly:
 
     def test_update_only_skips_mcps(self, cli_runner, mock_all_modules):
         """--update-only não instala MCPs."""
-        result = cli_runner.invoke(
-            main, ["--non-interactive", "--multi-account", "--update-only"]
-        )
+        result = cli_runner.invoke(main, ["--non-interactive", "--multi-account", "--update-only"])
 
         assert result.exit_code == 0
         # Não deve perguntar sobre MCPs
@@ -222,9 +225,7 @@ class TestCLIErrorHandling:
         assert result.exit_code == 1
         assert "Infisical não configurado" in result.output
 
-    def test_mcp_failure_continues_interactive(
-        self, cli_runner, mock_all_modules, monkeypatch
-    ):
+    def test_mcp_failure_continues_interactive(self, cli_runner, mock_all_modules, monkeypatch):
         """Falha de MCP permite continuar no modo interativo."""
 
         def mock_install_mcps_fail():
@@ -234,6 +235,7 @@ class TestCLIErrorHandling:
 
         # Mock Confirm.ask para retornar True (continuar sem MCPs)
         from rich.prompt import Confirm
+
         monkeypatch.setattr(Confirm, "ask", lambda *args, **kwargs: True)
 
         result = cli_runner.invoke(main, ["--multi-account"])
