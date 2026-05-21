@@ -1,4 +1,5 @@
 # CLAUDE.md — Configuração Global
+
 <!-- Cache marker: stable-root-v4 -->
 
 ---
@@ -17,6 +18,7 @@
 ---
 
 ## 🧠 Modo de Planejamento Obrigatório
+
 <!-- CACHE_MARKER: planning-stable -->
 
 **REGRA ABSOLUTA: Nunca executar antes de planejar.**
@@ -71,24 +73,25 @@ comando bash ou decisão arquitetural — seguir este fluxo:
 ---
 
 ## 🔧 Skills — Carregar antes de qualquer tarefa não trivial
+
 <!-- CACHE_MARKER: skills-stable -->
 
-| Contexto                       | Skill                                          |
-|--------------------------------|------------------------------------------------|
-| Python / Django / DRF          | `~/.claude/skills/python-django/SKILL.md`      |
-| Vue.js / Frontend              | `~/.claude/skills/vue-frontend/SKILL.md`       |
-| PySpark / Airflow / Hadoop     | `~/.claude/skills/data-engineering/SKILL.md`   |
-| C# / Unity Android             | `~/.claude/skills/unity-android/SKILL.md`      |
-| GitLab CI/CD (MPRJ)            | `~/.claude/skills/gitlab-ci/SKILL.md`          |
-| Infisical (secrets)            | `~/.claude/skills/infisical-secrets/SKILL.md`  |
-| OpenTelemetry / Dynatrace      | `~/.claude/skills/opentelemetry/SKILL.md`      |
-| Documentos Word / .docx        | `/mnt/skills/public/docx/SKILL.md`             |
-| PDFs (criar ou extrair)        | `/mnt/skills/public/pdf/SKILL.md`              |
-| Apresentações .pptx            | `/mnt/skills/public/pptx/SKILL.md`             |
-| Planilhas .xlsx                | `/mnt/skills/public/xlsx/SKILL.md`             |
-| UI / Frontend / Componentes    | `/mnt/skills/public/frontend-design/SKILL.md`  |
-| Arquivos enviados pelo usuário | `/mnt/skills/public/file-reading/SKILL.md`     |
-| PDFs para leitura              | `/mnt/skills/public/pdf-reading/SKILL.md`      |
+| Contexto                       | Skill                                         |
+|--------------------------------|-----------------------------------------------|
+| Python / Django / DRF          | `~/.claude/skills/python-django/SKILL.md`     |
+| Vue.js / Frontend              | `~/.claude/skills/vue-frontend/SKILL.md`      |
+| PySpark / Airflow / Hadoop     | `~/.claude/skills/data-engineering/SKILL.md`  |
+| C# / Unity Android             | `~/.claude/skills/unity-android/SKILL.md`     |
+| GitLab CI/CD (MPRJ)            | `~/.claude/skills/gitlab-ci/SKILL.md`         |
+| Infisical (secrets)            | `~/.claude/skills/infisical-secrets/SKILL.md` |
+| OpenTelemetry / Dynatrace      | `~/.claude/skills/opentelemetry/SKILL.md`     |
+| Documentos Word / .docx        | `/mnt/skills/public/docx/SKILL.md`            |
+| PDFs (criar ou extrair)        | `/mnt/skills/public/pdf/SKILL.md`             |
+| Apresentações .pptx            | `/mnt/skills/public/pptx/SKILL.md`            |
+| Planilhas .xlsx                | `/mnt/skills/public/xlsx/SKILL.md`            |
+| UI / Frontend / Componentes    | `/mnt/skills/public/frontend-design/SKILL.md` |
+| Arquivos enviados pelo usuário | `/mnt/skills/public/file-reading/SKILL.md`    |
+| PDFs para leitura              | `/mnt/skills/public/pdf-reading/SKILL.md`     |
 
 **Regra:** carregar a skill ANTES de escrever qualquer código ou criar qualquer arquivo.
 
@@ -111,18 +114,19 @@ comando bash ou decisão arquitetural — seguir este fluxo:
 
 ## 🔌 MCP Servers
 
-| Server       | Uso                                     | Escopo  |
-|--------------|-----------------------------------------|---------|
-| `gitlab`     | MRs, issues, pipelines no MPRJ GitLab   | user    |
-| `filesystem` | Acesso estruturado a arquivos           | user    |
-| `postgres`   | Queries diretas no banco de dev         | user    |
-| `memory`     | Persistência de contexto cross-session  | user    |
-| `postman`    | Collections, environments, APIs         | user    |
-| `playwright` | Testes E2E                              | project |
+| Server       | Uso                                    | Escopo  |
+|--------------|----------------------------------------|---------|
+| `gitlab`     | MRs, issues, pipelines no MPRJ GitLab  | user    |
+| `filesystem` | Acesso estruturado a arquivos          | user    |
+| `postgres`   | Queries diretas no banco de dev        | user    |
+| `memory`     | Persistência de contexto cross-session | user    |
+| `postman`    | Collections, environments, APIs        | user    |
+| `playwright` | Testes E2E                             | project |
 
 ---
 
 ## ⚡ Princípios Core
+
 <!-- CACHE_MARKER: principles-stable -->
 
 | Princípio      | Regra                                                            |
@@ -147,6 +151,7 @@ Config externa    > Hardcode
 ---
 
 ## 🎓 Conceitos em Estudo Ativo
+
 <!-- Incluir nos exemplos sempre que relevante e natural -->
 <!-- CACHE_MARKER: learning-stable -->
 
@@ -159,6 +164,7 @@ Config externa    > Hardcode
 
 ```python
 from dataclasses import dataclass, field
+
 
 @dataclass
 class Usuario:
@@ -180,10 +186,13 @@ class Usuario:
 from typing import Protocol
 from dataclasses import dataclass
 
+
 # Contrato — Structural Typing
 class RepositorioProtocol(Protocol):
     def buscar(self, id: int) -> "Usuario": ...
+
     def salvar(self, usuario: "Usuario") -> None: ...
+
 
 # Dado — Dataclass
 @dataclass
@@ -191,6 +200,7 @@ class Usuario:
     id: int
     username: str
     email: str
+
 
 # Fake para teste — satisfaz Protocol sem herdar nada
 class FakeRepositorio:
@@ -237,6 +247,7 @@ Precisa de contexto isolado?
 ---
 
 ## ✅ Checklist Universal Pré-Entrega
+
 <!-- CACHE_MARKER: checklist-stable -->
 
 ```
@@ -258,7 +269,9 @@ Precisa de contexto isolado?
 // NUNCA
 {
   "permissions": {
-    "allow": ["Bash(*)"]
+    "allow": [
+      "Bash(*)"
+    ]
   }
 }
 
@@ -294,11 +307,11 @@ Cache `ephemeral` dura ~5 min. Reenviar o bloco a cada 4 min garante hit contín
 
 ### Economia estimada com caching
 
-| Situação                 | Sem cache     | Com cache      | Economia |
-|--------------------------|---------------|----------------|----------|
-| 10 chamadas / sessão     | 10× tokens    | 1× + 9× hit    | ~75–90%  |
-| CLAUDE.md ~2.000 tokens  | 20.000 tokens | ~3.800 tokens  | ~81%     |
-| CLAUDE.md ~4.000 tokens  | 40.000 tokens | ~6.200 tokens  | ~84%     |
+| Situação                | Sem cache     | Com cache     | Economia |
+|-------------------------|---------------|---------------|----------|
+| 10 chamadas / sessão    | 10× tokens    | 1× + 9× hit   | ~75–90%  |
+| CLAUDE.md ~2.000 tokens | 20.000 tokens | ~3.800 tokens | ~81%     |
+| CLAUDE.md ~4.000 tokens | 40.000 tokens | ~6.200 tokens | ~84%     |
 
 > Cache `ephemeral` dura ~5 minutos de inatividade na API Anthropic.  
 > Para sessões longas: reenviar o bloco estável a cada 4 minutos garante hit contínuo.
